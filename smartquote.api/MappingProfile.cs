@@ -1,5 +1,5 @@
 ﻿using AutoMapper;
-using smartquote.api.DTOs.Auth;
+using smartquote.api.DTOs.Account;
 using smartquote.api.DTOs.Items;
 using smartquote.api.DTOs.Items.Requests;
 using smartquote.api.Entities;
@@ -13,5 +13,6 @@ public class MappingProfile : Profile
         CreateMap<CreateQuoteItemRequestDto, Item>();
         CreateMap<UpdateQuoteItemRequestDto, Item>();
         CreateMap<Item, ItemDto>();
+        CreateMap<User, AccountDetailsDto>();
     }
 }

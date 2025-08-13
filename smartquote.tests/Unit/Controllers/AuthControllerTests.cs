@@ -4,8 +4,8 @@ using Microsoft.AspNetCore.Http;
 using Microsoft.AspNetCore.Mvc;
 using Moq;
 using smartquote.api.Controllers;
-using smartquote.api.DTOs.Auth;
-using smartquote.api.DTOs.Auth.Responses;
+using smartquote.api.DTOs.Account;
+using smartquote.api.DTOs.Account.Responses;
 using smartquote.api.Services.Interfaces;
 using smartquote.api.Validators;
 
@@ -13,19 +13,19 @@ namespace smartquote.tests.Unit.Controllers;
 
 public class AuthControllerTests
 {
-    private readonly Mock<IAuthService> _authService;
+    private readonly Mock<IAccountService> _authService;
     private readonly IValidator<RegisterRequestDto> _registerValidator;
     private readonly IValidator<LoginRequestDto> _loginValidator;
 
-    private readonly AuthController _authController;
+    private readonly AccountController _authController;
 
     public AuthControllerTests()
     {
-        _authService = new Mock<IAuthService>();
+        _authService = new Mock<IAccountService>();
         _registerValidator = new RegisterRequestDtoValidator();
         _loginValidator = new LoginRequestDtoValidator();
 
-        _authController = new AuthController(
+        _authController = new AccountController(
             _authService.Object,
             _registerValidator,
             _loginValidator);

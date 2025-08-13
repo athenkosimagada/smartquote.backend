@@ -1,5 +1,5 @@
 ﻿using FluentValidation;
-using smartquote.api.DTOs.Auth;
+using smartquote.api.DTOs.Account;
 
 namespace smartquote.api.Validators;
 

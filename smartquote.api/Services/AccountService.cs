@@ -1,7 +1,7 @@
 ﻿using AutoMapper;
 using Microsoft.AspNetCore.Identity;
-using smartquote.api.DTOs.Auth;
-using smartquote.api.DTOs.Auth.Responses;
+using smartquote.api.DTOs.Account;
+using smartquote.api.DTOs.Account.Responses;
 using smartquote.api.Entities;
 using smartquote.api.Exceptions;
 using smartquote.api.Repositories.Interfaces;
@@ -9,14 +9,14 @@ using smartquote.api.Services.Interfaces;
 
 namespace smartquote.api.Services;
 
-public class AuthService : IAuthService
+public class AccountService : IAccountService
 {
     private readonly IUnitOfWork _unitOfWork;
     private readonly IPasswordHasher<User> _passwordHasher;
     private readonly IJwtService _jwtService;
     private readonly IMapper _mapper;
 
-    public AuthService(
+    public AccountService(
         IUnitOfWork unitOfWork,
         IPasswordHasher<User> passwordHasher,
         IJwtService jwtService,
@@ -95,5 +95,16 @@ public class AuthService : IAuthService
     public Task<LogoutResponseDto> LogoutAsync(LogoutRequestDto request)
     {
         throw new NotImplementedException();
+    }
+
+    public async Task<AccountDetailsResponseDto> GetAccountDetailsAsync(string email)
+    {
+        var user = await _unitOfWork.Users.GetByEmailAsync(email);
+        if (user == null) throw new NotFoundException("User not found.");
+        var accountDetails = _mapper.Map<AccountDetailsDto>(user);
+        return new AccountDetailsResponseDto
+        {
+            AccountDetails = accountDetails
+        };
     }
 }

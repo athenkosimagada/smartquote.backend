@@ -11,4 +11,15 @@ public class SmartQuoteDbContext : IdentityDbContext<User>
 
     public DbSet<Item> Items { get; set; }
     public DbSet<Quote> Quotes { get; set; }
+
+    protected override void OnModelCreating(ModelBuilder builder)
+    {
+        base.OnModelCreating(builder);
+
+        // Add unique index on Email
+        builder.Entity<User>()
+            .HasIndex(u => u.Email)
+            .IsUnique()
+            .HasDatabaseName("IX_User_Email");
+    }
 }

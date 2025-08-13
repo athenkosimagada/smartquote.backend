@@ -1,6 +1,7 @@
 ﻿using Microsoft.Extensions.Options;
 using Microsoft.IdentityModel.Tokens;
-using smartquote.api.DTOs.Auth;
+using smartquote.api.DTOs.Account;
+using smartquote.api.Entities;
 using smartquote.api.Services.Interfaces;
 using smartquote.api.Settings;
 using System.IdentityModel.Tokens.Jwt;

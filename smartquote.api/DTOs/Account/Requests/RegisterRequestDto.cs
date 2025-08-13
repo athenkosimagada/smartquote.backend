@@ -1,4 +1,4 @@
-﻿namespace smartquote.api.DTOs.Auth;
+﻿namespace smartquote.api.DTOs.Account;
 
 public class RegisterRequestDto
 {

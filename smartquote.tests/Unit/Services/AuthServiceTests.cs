@@ -1,7 +1,7 @@
 ﻿using Moq;
 using FluentAssertions;
 using Microsoft.AspNetCore.Identity;
-using smartquote.api.DTOs.Auth;
+using smartquote.api.DTOs.Account;
 using smartquote.api.Entities;
 using smartquote.api.Repositories.Interfaces;
 using smartquote.api.Services;
@@ -20,7 +20,7 @@ public class AuthServiceTests
     private readonly Mock<IMapper> _mapper;
 
     private readonly IPasswordHasher<User> _passwordHasher;
-    private readonly IAuthService _authService;
+    private readonly IAccountService _authService;
     public AuthServiceTests()
     {
         _userRepository = new Mock<IUserRepository>();
@@ -31,7 +31,7 @@ public class AuthServiceTests
 
         _unitOfWork.Setup(u => u.Users).Returns(_userRepository.Object);
 
-        _authService = new AuthService(
+        _authService = new AccountService(
             _unitOfWork.Object,
             _passwordHasher,
             _jwtService.Object,

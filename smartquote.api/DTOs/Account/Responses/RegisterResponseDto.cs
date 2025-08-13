@@ -1,4 +1,4 @@
-﻿namespace smartquote.api.DTOs.Auth.Responses;
+﻿namespace smartquote.api.DTOs.Account.Responses;
 
 public class RegisterResponseDto
 {
