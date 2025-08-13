@@ -57,7 +57,9 @@ public class QuoteItemService : IQuoteItemService
         {
             throw new Exception("Failed to create the quote item.");
         }
-        return new CreateQuoteItemResponseDto();
+        var response = new CreateQuoteItemResponseDto();
+        response.ItemId = quoteItem.Id;
+        return response;
     }
 
     public async Task<UpdateQuoteItemResponseDto> UpdateQuoteItemAsync(UpdateQuoteItemRequestDto request)
@@ -77,7 +79,9 @@ public class QuoteItemService : IQuoteItemService
             throw new Exception("Failed to update the quote item.");
         }
         
-        return new UpdateQuoteItemResponseDto();
+        var response =  new UpdateQuoteItemResponseDto();
+        response.ItemId = quoteItem.Id;
+        return response;
     }
 
     public async Task DeleteQuoteItemAsync(int id)

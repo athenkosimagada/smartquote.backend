@@ -4,4 +4,5 @@ public class CreateQuoteItemResponseDto
 {
     public bool Success { get; set; } = true;
     public string Message { get; set; } = "Quote item created successfully.";
+    public int ItemId { get; set; }
 }
