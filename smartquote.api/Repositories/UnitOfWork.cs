@@ -10,9 +10,15 @@ public class UnitOfWork : IUnitOfWork
     {
         _context = context;
         Users = new UserRepository(_context);
+        Quotes = new QuoteRepository(_context);
+        QuoteItems = new QuoteItemRepository(_context);
     }
 
     public IUserRepository Users { get; private set; }
+
+    public IQuoteRepository Quotes { get; private set; }
+
+    public IQuoteItemRepository QuoteItems { get; private set; }
 
     public async Task<int> SaveChangesAsync()
     {

@@ -18,9 +18,12 @@ public class Repository<TEntity> : IRepository<TEntity> where TEntity : class
         return await _context.Set<TEntity>().FindAsync(id);
     }
 
-    public async Task<IEnumerable<TEntity>> GetAllAsync()
+    public async Task<IEnumerable<TEntity>> GetAllAsync(int pageNumber, int pageSize)
     {
-        return await _context.Set<TEntity>().ToListAsync();
+        return await _context.Set<TEntity>()
+            .Skip((pageNumber - 1) * pageSize)
+            .Take(pageSize)
+            .ToListAsync();
     }
 
     public async Task<IEnumerable<TEntity>> FindAsync(Expression<Func<TEntity, bool>> predicate)

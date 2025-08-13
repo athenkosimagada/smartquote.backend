@@ -1,4 +1,5 @@
-﻿using Microsoft.AspNetCore.Identity;
+﻿using AutoMapper;
+using Microsoft.AspNetCore.Identity;
 using smartquote.api.DTOs.Auth;
 using smartquote.api.DTOs.Auth.Responses;
 using smartquote.api.Entities;
@@ -13,30 +14,27 @@ public class AuthService : IAuthService
     private readonly IUnitOfWork _unitOfWork;
     private readonly IPasswordHasher<User> _passwordHasher;
     private readonly IJwtService _jwtService;
+    private readonly IMapper _mapper;
 
     public AuthService(
         IUnitOfWork unitOfWork,
         IPasswordHasher<User> passwordHasher,
-        IJwtService jwtService)
+        IJwtService jwtService,
+        IMapper mapper)
     {
         _unitOfWork = unitOfWork;
         _passwordHasher = passwordHasher;
         _jwtService = jwtService;
+        _mapper = mapper;
     }
     public async Task<RegisterResponseDto> RegisterAsync(RegisterRequestDto request)
     {
         var existingUser = await _unitOfWork.Users.GetByEmailAsync(request.Email);
         if (existingUser != null) throw new AlreadyExistException("Email already in use.");
 
-        var user = new User
-        {
-            FirstName = request.FirstName,
-            LastName = request.LastName,
-            Email = request.Email,
-            FullName = $"{request.FirstName} {request.LastName}"
-        };
-
+        var user = _mapper.Map<User>(request);
         user.PasswordHash = _passwordHasher.HashPassword(user, request.Password);
+
         await _unitOfWork.Users.AddAsync(user);
         await _unitOfWork.SaveChangesAsync();
 

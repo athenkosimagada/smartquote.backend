@@ -1,4 +1,5 @@
-﻿using FluentAssertions;
+﻿
+using FluentAssertions;
 using Microsoft.EntityFrameworkCore;
 using smartquote.api.Data;
 using smartquote.api.Entities;

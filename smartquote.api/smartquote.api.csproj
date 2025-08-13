@@ -8,6 +8,7 @@
   </PropertyGroup>
 
   <ItemGroup>
+    <PackageReference Include="AutoMapper" Version="15.0.1" />
     <PackageReference Include="FluentValidation" Version="12.0.0" />
     <PackageReference Include="FluentValidation.DependencyInjectionExtensions" Version="12.0.0" />
     <PackageReference Include="Microsoft.AspNetCore.Identity.EntityFrameworkCore" Version="9.0.8" />
@@ -23,8 +24,6 @@
   </ItemGroup>
 
   <ItemGroup>
-    <Folder Include="DTOs\Items\Requests\" />
-    <Folder Include="DTOs\Items\Responses\" />
     <Folder Include="DTOs\Quotes\Requests\" />
     <Folder Include="DTOs\Quotes\Responses\" />
     <Folder Include="Enums\" />

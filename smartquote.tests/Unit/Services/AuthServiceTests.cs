@@ -7,6 +7,8 @@ using smartquote.api.Repositories.Interfaces;
 using smartquote.api.Services;
 using smartquote.api.Services.Interfaces;
 using smartquote.api.Exceptions;
+using smartquote.api;
+using AutoMapper;
 
 namespace smartquote.tests.Unit.Services;
 
@@ -15,6 +17,7 @@ public class AuthServiceTests
     private readonly Mock<IUnitOfWork> _unitOfWork;
     private readonly Mock<IUserRepository> _userRepository;
     private readonly Mock<IJwtService> _jwtService;
+    private readonly Mock<IMapper> _mapper;
 
     private readonly IPasswordHasher<User> _passwordHasher;
     private readonly IAuthService _authService;
@@ -24,13 +27,15 @@ public class AuthServiceTests
         _unitOfWork = new Mock<IUnitOfWork>();
         _jwtService = new Mock<IJwtService>();
         _passwordHasher = new PasswordHasher<User>();
+        _mapper = new Mock<IMapper>();
 
         _unitOfWork.Setup(u => u.Users).Returns(_userRepository.Object);
 
         _authService = new AuthService(
             _unitOfWork.Object,
             _passwordHasher,
-            _jwtService.Object);
+            _jwtService.Object,
+            _mapper.Object);
     }
 
     [Fact]
@@ -43,6 +48,16 @@ public class AuthServiceTests
             Email = "janesmith@example.com",
             Password = "SecurePassword@123"
         };
+
+        _mapper
+            .Setup(m => m.Map<User>(It.IsAny<RegisterRequestDto>()))
+            .Returns(new User
+            {
+                FirstName = request.FirstName,
+                LastName = request.LastName,
+                Email = request.Email,
+                FullName = $"{request.FirstName} {request.LastName}"
+            });
 
         _userRepository
             .Setup(r => r.GetByEmailAsync(request.Email))
