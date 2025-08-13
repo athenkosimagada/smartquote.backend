@@ -1,0 +1,17 @@
+﻿using smartquote.api.DTOs.Auth;
+using smartquote.api.DTOs.Auth.Responses;
+
+namespace smartquote.api.Services.Interfaces;
+
+public interface IAuthService
+{
+    Task<RegisterResponseDto> RegisterAsync(RegisterRequestDto request);
+    Task<LoginResponseDto> LoginAsync(LoginRequestDto request);
+    Task<ResendConfirmationEmailResponseDto> ResendConfirmationEmailAsync(ResendConfirmationEmailRequestDto request);
+    Task<ConfirmEmailResponseDto> ConfirmEmailAsync(ConfirmEmailRequestDto request);
+    Task<ForgotPasswordResponseDto> ForgotPasswordAsync(ForgotPasswordRequestDto request);
+    Task<RefreshTokenResponseDto> RefreshTokenAsync(RefreshTokenRequestDto request);
+    Task<ChangePasswordResponseDto> ChangePasswordAsync(ChangePasswordRequestDto request);
+    Task<ResetPasswordResponseDto> ResetPasswordAsync(ResetPasswordRequestDto request);
+    Task<LogoutResponseDto> LogoutAsync(LogoutRequestDto request);
+}
