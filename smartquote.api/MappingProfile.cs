@@ -15,11 +15,18 @@ public class MappingProfile : Profile
         CreateMap<User, AccountDetailsDto>().ReverseMap();
         CreateMap<RegisterRequestDto, User>();
         CreateMap<LoginRequestDto, User>();
+
+        // Item mappings
         CreateMap<CreateQuoteItemRequestDto, Item>().ReverseMap();
         CreateMap<UpdateQuoteItemRequestDto, Item>().ReverseMap();
         CreateMap<Item, ItemDto>().ReverseMap();
+
+        // Quote mappings
         CreateMap<CreateQuoteRequestDto, Quote>().ReverseMap();
         CreateMap<UpdateQuoteRequestDto, Quote>().ReverseMap();
-        CreateMap<Quote, QuoteDto>();
+
+        // 👇 This ensures Quote.Items → QuoteDto.Items is mapped automatically
+        CreateMap<Quote, QuoteDto>()
+            .ForMember(dest => dest.Items, opt => opt.MapFrom(src => src.Items));
     }
 }

@@ -1,4 +1,5 @@
 ﻿using Microsoft.EntityFrameworkCore;
+using smartquote.api.Entities;
 using smartquote.api.Repositories.Interfaces;
 using System.Linq.Expressions;
 
@@ -13,14 +14,28 @@ public class Repository<TEntity> : IRepository<TEntity> where TEntity : class
         _context = context;
     }
 
-    public async Task<TEntity?> GetByIdAsync(int id)
+    public async Task<TEntity?> GetByIdAsync(int id, bool includeItems = false)
     {
-        return await _context.Set<TEntity>().FindAsync(id);
+        var query = _context.Set<TEntity>().AsQueryable();
+
+        if (includeItems && typeof(TEntity) == typeof(Quote))
+        {
+            query = query.Include("Items");
+        }
+
+        return await query.FirstOrDefaultAsync(e => EF.Property<int>(e, "Id") == id);
     }
 
-    public async Task<IEnumerable<TEntity>> GetAllAsync(int pageNumber, int pageSize)
+    public async Task<IEnumerable<TEntity>> GetAllAsync(int pageNumber, int pageSize, bool includeItems = false)
     {
-        return await _context.Set<TEntity>()
+        var query = _context.Set<TEntity>().AsQueryable();
+
+        if (includeItems && typeof(TEntity) == typeof(Quote))
+        {
+            query = query.Include("Items");
+        }
+
+        return await query
             .Skip((pageNumber - 1) * pageSize)
             .Take(pageSize)
             .ToListAsync();

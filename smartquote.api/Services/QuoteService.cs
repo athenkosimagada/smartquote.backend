@@ -25,7 +25,7 @@ public class QuoteService : IQuoteService
 
     public async Task<QuoteResponseDto> GetQuoteByIdAsync(int id)
     {
-        var quote = await _unitOfWork.Quotes.GetByIdAsync(id);
+        var quote = await _unitOfWork.Quotes.GetByIdAsync(id, includeItems: true);
         if(quote == null)
         {
             throw new NotFoundException($"Quote with ID {id} not found.");
@@ -39,7 +39,7 @@ public class QuoteService : IQuoteService
 
     public async Task<QuotesResponseDto> GetQuotesAsync(int pageNumber, int pageSize)
     {
-        var quotes = await _unitOfWork.Quotes.GetAllAsync(pageNumber, pageSize);
+        var quotes = await _unitOfWork.Quotes.GetAllAsync(pageNumber, pageSize, includeItems: true);
         return new QuotesResponseDto
         {
             Quotes = _mapper.Map<List<QuoteDto>>(quotes),
