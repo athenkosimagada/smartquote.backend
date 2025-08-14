@@ -32,6 +32,7 @@ builder.Services.AddDbContext<SmartQuoteDbContext>(options =>
 builder.Services.AddScoped<IUnitOfWork, UnitOfWork>();
 builder.Services.AddScoped<IAccountService, AccountService>();
 builder.Services.AddScoped<IQuoteItemService, QuoteItemService>();
+builder.Services.AddScoped<IQuoteService, QuoteService>();
 builder.Services.AddScoped<IJwtService, JwtService>();
 
 builder.Services.AddScoped<IPasswordHasher<User>, PasswordHasher<User>>();

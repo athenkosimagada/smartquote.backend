@@ -51,14 +51,22 @@ public class AccountController : ControllerBase
 
         if (string.IsNullOrEmpty(accessToken))
         {
-            return Unauthorized(new { message = "Unauthorized" });
+            return Unauthorized(new 
+            {
+                Success = false,
+                Message = "Unauthorized" 
+            });
         }
 
         var userEmail = User.FindFirst(ClaimTypes.Name)?.Value;
 
         if (string.IsNullOrEmpty(userEmail))
         {
-            return Unauthorized(new { message = "Unauthorized" });
+            return Unauthorized(new
+            {
+                Success = false,
+                Message = "Unauthorized"
+            });
         }
 
         var response = await _authService.GetAccountDetailsAsync(userEmail);

@@ -1,9 +1,8 @@
-﻿namespace smartquote.api.Entities;
+﻿namespace smartquote.api.DTOs.Quotes.Requests;
 
-public class Quote : BaseEntity
+public class CreateQuoteRequestDto
 {
     public string UserId { get; set; } = string.Empty;
     public string Customer { get; set; } = string.Empty;
     public decimal Total { get; set; }
-    public List<Item> Items { get; set; } = new List<Item>();
 }
