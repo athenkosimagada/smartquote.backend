@@ -48,6 +48,7 @@ public class QuoteService : IQuoteService
             TotalCount = quotes.Count(),
         };
     }
+
     public async Task<CreateQuoteResponseDto> CreateQuoteAsync(CreateQuoteRequestDto request)
     {
         var quote = _mapper.Map<Quote>(request);
@@ -84,6 +85,7 @@ public class QuoteService : IQuoteService
         response.QuoteId = quote.Id;
         return response;
     }
+
     public async Task DeleteQuoteAsync(int id)
     {
         var quote = await _unitOfWork.Quotes.GetByIdAsync(id);
