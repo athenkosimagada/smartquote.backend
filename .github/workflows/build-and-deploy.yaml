@@ -1,4 +1,4 @@
-name: smartquote-backend
+name: Smart Quote CI/CD
 
 on:
   workflow_dispatch:
