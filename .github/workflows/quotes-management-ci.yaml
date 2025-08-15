@@ -4,7 +4,7 @@ on:
   workflow_dispatch:
   push:
     branches:
-      - feature/quotes-management
+      - feature/quote-management
 
 env:
   DOTNET_VERSION: '9.x'

@@ -1,4 +1,5 @@
-﻿using Microsoft.AspNetCore.Authorization;
+﻿using FluentValidation;
+using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Http;
 using Microsoft.AspNetCore.Mvc;
 using smartquote.api.DTOs.Quotes.Requests;
@@ -14,11 +15,14 @@ namespace smartquote.api.Controllers;
 public class QuotesController : ControllerBase
 {
     private readonly IQuoteService _quoteService;
+    private readonly IValidator<CreateQuoteRequestDto> _createQuoteValidator;
 
     public QuotesController(
-        IQuoteService quoteService)
+        IQuoteService quoteService,
+        IValidator<CreateQuoteRequestDto> createQuoteValidator)
     {
         _quoteService = quoteService;
+        _createQuoteValidator = createQuoteValidator;
     }
 
     [HttpGet]
@@ -66,6 +70,8 @@ public class QuotesController : ControllerBase
     [HttpPost]
     public async Task<IActionResult> CreateQuote(CreateQuoteRequestDto request)
     {
+        await _createQuoteValidator.ValidateAndThrowAsync(request);
+
         var response = await _quoteService.CreateQuoteAsync(request);
         return CreatedAtAction(nameof(GetQuoteById), new { id = response.QuoteId }, response);
     }
