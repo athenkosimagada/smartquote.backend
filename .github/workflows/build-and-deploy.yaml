@@ -10,7 +10,6 @@ env:
   DOTNET_VERSION: '9.x'
   SOLUTION_PATH: 'smartquote.sln'
   API_PROJECT_PATH: 'smartquote.api'
-  PUBLISH_DIR: './publish'
 
 jobs:
   build-and-test:
@@ -33,15 +32,6 @@ jobs:
 
       - name: Test
         run: dotnet test ${{ env.SOLUTION_PATH }} --configuration Release --no-restore --no-build --verbosity normal
-
-      - name: Publish
-        run: dotnet publish ${{ env.API_PROJECT_PATH }} --configuration Release --no-restore --no-build -o ${{ env.PUBLISH_DIR }}
-
-      - name: Upload Artifacts
-        uses: actions/upload-artifact@v4
-        with:
-          name: webapi
-          path: ${{ env.PUBLISH_DIR }}
   
   deploy:
     name: Deploy to Railway
@@ -57,9 +47,5 @@ jobs:
      JwtSettings__ExpirationMinutes: ${{ secrets.JWT_EXPIRATION_MINUTES }}
      ConnectionStrings__DefaultConnection: ${{ secrets.DB_CONNECTION_STRING }}
     steps:
-    - uses: actions/download-artifact@v4
-      with:
-       name: webapi
-       path: ./publish
+    - run: railway up --service ${{ env.SVC_ID }}
 
-    - run: railway up --service ${{ env.SVC_ID }} -- --directory ./publish
