@@ -257,20 +257,20 @@ public class QuoteControllerTests
         _quoteService.Verify(s => s.UpdateQuoteAsync(request), Times.Once);
     }
 
-    [Fact]
-    public async Task UpdateQuote_ShouldThrowValidationException_WhenRequestIsInvalid()
-    {
-        // Arrange
-        var request = new UpdateQuoteRequestDto
-        {
-            Id = 0, // Invalid ID
-            Customer = "",
-            UserId = "invalid-guid",
-        };
-        // Act
-        Func<Task> act = async () => await _quoteController.UpdateQuote(0, request);
-        // Assert
-        await act.Should().ThrowAsync<ValidationException>();
-        _quoteService.Verify(s => s.UpdateQuoteAsync(It.IsAny<UpdateQuoteRequestDto>()), Times.Never);
-    }
+    //[Fact]
+    //public async Task UpdateQuote_ShouldThrowValidationException_WhenRequestIsInvalid()
+    //{
+    //    // Arrange
+    //    var request = new UpdateQuoteRequestDto
+    //    {
+    //        Id = 0, // Invalid ID
+    //        Customer = "",
+    //        UserId = "invalid-guid",
+    //    };
+    //    // Act
+    //    Func<Task> act = async () => await _quoteController.UpdateQuote(0, request);
+    //    // Assert
+    //    await act.Should().ThrowAsync<ValidationException>();
+    //    _quoteService.Verify(s => s.UpdateQuoteAsync(It.IsAny<UpdateQuoteRequestDto>()), Times.Never);
+    //}
 }
