@@ -47,5 +47,5 @@ jobs:
      JwtSettings__ExpirationMinutes: ${{ secrets.JWT_EXPIRATION_MINUTES }}
      ConnectionStrings__DefaultConnection: ${{ secrets.DB_CONNECTION_STRING }}
     steps:
-    - run: railway up --service ${{ env.SVC_ID }}
+    - run: railway up --service ${{ env.SVC_ID }} --path ./smartquote.api
 
