@@ -5,17 +5,17 @@ FROM mcr.microsoft.com/dotnet/aspnet:9.0 AS base
 USER $APP_UID
 WORKDIR /app
 EXPOSE 5000
-EXPOSE 5001
+EXPOSE 5001Update Dockerfile
 
 
 # This stage is used to build the service project
 FROM mcr.microsoft.com/dotnet/sdk:9.0 AS build
 ARG BUILD_CONFIGURATION=Release
 WORKDIR /src
-COPY ["smartquote.api.csproj", "."]
-RUN dotnet restore "./smartquote.api.csproj"
+COPY ["smartquote.api/smartquote.api.csproj", "smartquote.api/"]
+RUN dotnet restore "./smartquote.api/smartquote.api.csproj"
 COPY . .
-WORKDIR "/src/."
+WORKDIR "/src/smartquote.api"
 RUN dotnet build "./smartquote.api.csproj" -c $BUILD_CONFIGURATION -o /app/build
 
 # This stage is used to publish the service project to be copied to the final stage
