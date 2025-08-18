@@ -17,4 +17,4 @@ FROM mcr.microsoft.com/dotnet/runtime-deps:9.0 AS final
 WORKDIR /app
 EXPOSE 5000
 COPY --from=publish /app/publish .
-ENTRYPOINT ["./smartquote.api"]
+ENTRYPOINT ["dotnet", "smartquote.api.dll"]
