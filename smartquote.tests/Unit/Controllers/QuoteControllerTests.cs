@@ -16,6 +16,7 @@ public class QuoteControllerTests
 {
     private readonly Mock<IQuoteService> _quoteService;
     private readonly IValidator<CreateQuoteRequestDto> _createQuoteValidator;
+    private readonly IValidator<UpdateQuoteRequestDto> _updateQuoteValidator;
 
     private readonly QuotesController _quoteController;
 
@@ -23,10 +24,12 @@ public class QuoteControllerTests
     {
         _quoteService = new Mock<IQuoteService>();
         _createQuoteValidator = new CreateQuoteRequestDtoValidator();
+        _updateQuoteValidator = new UpdateQuoteRequestDtoValidator();
 
         _quoteController = new QuotesController(
             _quoteService.Object,
-            _createQuoteValidator);
+            _createQuoteValidator,
+            _updateQuoteValidator);
     }
 
     [Fact]
@@ -257,20 +260,20 @@ public class QuoteControllerTests
         _quoteService.Verify(s => s.UpdateQuoteAsync(request), Times.Once);
     }
 
-    //[Fact]
-    //public async Task UpdateQuote_ShouldThrowValidationException_WhenRequestIsInvalid()
-    //{
-    //    // Arrange
-    //    var request = new UpdateQuoteRequestDto
-    //    {
-    //        Id = 0, // Invalid ID
-    //        Customer = "",
-    //        UserId = "invalid-guid",
-    //    };
-    //    // Act
-    //    Func<Task> act = async () => await _quoteController.UpdateQuote(0, request);
-    //    // Assert
-    //    await act.Should().ThrowAsync<ValidationException>();
-    //    _quoteService.Verify(s => s.UpdateQuoteAsync(It.IsAny<UpdateQuoteRequestDto>()), Times.Never);
-    //}
+    [Fact]
+    public async Task UpdateQuote_ShouldThrowValidationException_WhenRequestIsInvalid()
+    {
+        // Arrange
+        var request = new UpdateQuoteRequestDto
+        {
+            Id = 0, // Invalid ID
+            Customer = "",
+            UserId = "invalid-guid",
+        };
+        // Act
+        Func<Task> act = async () => await _quoteController.UpdateQuote(0, request);
+        // Assert
+        await act.Should().ThrowAsync<ValidationException>();
+        _quoteService.Verify(s => s.UpdateQuoteAsync(It.IsAny<UpdateQuoteRequestDto>()), Times.Never);
+    }
 }
