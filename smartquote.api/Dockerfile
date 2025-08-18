@@ -5,7 +5,7 @@ FROM mcr.microsoft.com/dotnet/aspnet:9.0 AS base
 USER $APP_UID
 WORKDIR /app
 EXPOSE 5000
-EXPOSE 5001Update Dockerfile
+EXPOSE 5001
 
 
 # This stage is used to build the service project
