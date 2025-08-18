@@ -1,32 +1,20 @@
-# Base runtime image
-FROM mcr.microsoft.com/dotnet/aspnet:9.0 AS base
-WORKDIR /app
-ENV ASPNETCORE_URLS=http://+:${PORT}
-EXPOSE 5000
-
-# Build image
 FROM mcr.microsoft.com/dotnet/sdk:9.0 AS build
+RUN apt-get update && apt-get install -y --no-install-recommends \
+    clang zlib1g-dev
 ARG BUILD_CONFIGURATION=Release
 WORKDIR /src
-
-# Copy csproj and solution for restore
-COPY smartquote.sln ./
-COPY smartquote.api/smartquote.api.csproj ./smartquote.api/
+COPY ["smartquote.api/smartquote.api.csproj", "smartquote.api/"]
 RUN dotnet restore "./smartquote.api/smartquote.api.csproj"
-
-# Copy the entire repo
 COPY . .
+WORKDIR "/src/smartquote.api"
+RUN dotnet build "./smartquote.api.csproj" -c $BUILD_CONFIGURATION -o /app/build
 
-# Build
-WORKDIR /src/smartquote.api
-RUN dotnet build "smartquote.api.csproj" -c $BUILD_CONFIGURATION -o /app/build
-
-# Publish
 FROM build AS publish
-RUN dotnet publish "smartquote.api.csproj" -c $BUILD_CONFIGURATION -o /app/publish /p:UseAppHost=false
+ARG BUILD_CONFIGURATION=Release
+RUN dotnet publish "./smartquote.api.csproj" -c $BUILD_CONFIGURATION -o /app/publish /p:UseAppHost=false
 
-# Final image
-FROM base AS final
+FROM mcr.microsoft.com/dotnet/runtime-deps:9.0 AS final
 WORKDIR /app
+EXPOSE 5000
 COPY --from=publish /app/publish .
-ENTRYPOINT ["dotnet", "smartquote.api.dll"]
+ENTRYPOINT ["./smartquote.api"]

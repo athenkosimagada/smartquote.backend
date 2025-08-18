@@ -1,0 +1,8 @@
+[build]
+builder = "dockerfile"
+dockerfilePath = "./smartquote.api/Dockerfile"
+
+[deploy]
+startCommand = "./smartquote.api"
+restartPolicyType = "always"
+healthcheckPath = "/health"

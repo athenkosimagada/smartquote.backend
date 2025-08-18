@@ -18,6 +18,11 @@ using System.Text;
 
 var builder = WebApplication.CreateBuilder(args);
 
+var port = Environment.GetEnvironmentVariable("PORT") ?? "5000";
+builder.WebHost.UseUrls($"http://*:{port}");
+
+builder.Services.AddHealthChecks();
+
 // Add services to the container.
 
 builder.Services.AddValidatorsFromAssembly(typeof(Program).Assembly, includeInternalTypes: true);
@@ -98,6 +103,8 @@ if (app.Environment.IsDevelopment())
     app.MapScalarApiReference();
     app.ApplyMigrations();
 }
+
+app.UseHealthChecks("/health");
 
 app.UseExceptionHandler();
 
