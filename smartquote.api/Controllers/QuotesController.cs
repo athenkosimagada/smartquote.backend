@@ -16,13 +16,16 @@ public class QuotesController : ControllerBase
 {
     private readonly IQuoteService _quoteService;
     private readonly IValidator<CreateQuoteRequestDto> _createQuoteValidator;
+    private readonly IValidator<UpdateQuoteRequestDto> _updateQuoteValidator;
 
     public QuotesController(
         IQuoteService quoteService,
-        IValidator<CreateQuoteRequestDto> createQuoteValidator)
+        IValidator<CreateQuoteRequestDto> createQuoteValidator,
+        IValidator<UpdateQuoteRequestDto> updateQuoteRequestDto)
     {
         _quoteService = quoteService;
         _createQuoteValidator = createQuoteValidator;
+        _updateQuoteValidator = updateQuoteRequestDto;
     }
 
     [HttpGet]
@@ -79,6 +82,8 @@ public class QuotesController : ControllerBase
     [HttpPut("{id}")]
     public async Task<IActionResult> UpdateQuote(int id, UpdateQuoteRequestDto request)
     {
+        await _updateQuoteValidator.ValidateAndThrowAsync(request);
+
         if (id <= 0)
         {
             return BadRequest(new

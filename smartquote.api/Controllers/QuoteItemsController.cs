@@ -1,4 +1,5 @@
-﻿using Microsoft.AspNetCore.Authorization;
+﻿using FluentValidation;
+using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Http;
 using Microsoft.AspNetCore.Mvc;
 using smartquote.api.DTOs.Items.Requests;
@@ -12,9 +13,16 @@ namespace smartquote.api.Controllers;
 public class QuoteItemsController : ControllerBase
 {
     private readonly IQuoteItemService _quoteItemService;
-    public QuoteItemsController(IQuoteItemService quoteItemService)
+    private readonly IValidator<CreateQuoteItemRequestDto> _createQuoteItemValidator;
+    private readonly IValidator<UpdateQuoteItemRequestDto> _updateQuoteItemValidator;
+    public QuoteItemsController(
+        IQuoteItemService quoteItemService,
+        IValidator<CreateQuoteItemRequestDto> createQuoteItemValidator,
+        IValidator<UpdateQuoteItemRequestDto> updateQuoteItemValidator)
     {
         _quoteItemService = quoteItemService;
+        _createQuoteItemValidator = createQuoteItemValidator;
+        _updateQuoteItemValidator = updateQuoteItemValidator;
     }
 
     [HttpGet]
@@ -61,6 +69,8 @@ public class QuoteItemsController : ControllerBase
     [HttpPost]
     public async Task<IActionResult> CreateQuoteItem([FromBody] CreateQuoteItemRequestDto request)
     {
+        await _createQuoteItemValidator.ValidateAndThrowAsync(request);
+
         var response = await _quoteItemService.CreateQuoteItemAsync(request);
         return CreatedAtAction(nameof(GetQuoteItemById), new { id = response.ItemId }, response);
     }
@@ -68,6 +78,8 @@ public class QuoteItemsController : ControllerBase
     [HttpPut("{id}")]
     public async Task<IActionResult> UpdateQuoteItem(int id, [FromBody] UpdateQuoteItemRequestDto request)
     {
+        await _updateQuoteItemValidator.ValidateAndThrowAsync(request);
+
         if (id <= 0)
         {
             return BadRequest(new

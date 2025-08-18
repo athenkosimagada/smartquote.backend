@@ -108,6 +108,8 @@ app.UseAuthorization();
 
 app.MapControllers();
 
+app.MapGet("/", () => Results.Ok("Hello World"));
+
 app.Run();
 
 public partial class Program { }
