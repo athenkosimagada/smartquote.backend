@@ -3,6 +3,7 @@ builder = "dockerfile"
 dockerfilePath = "./smartquote.api/Dockerfile"
 
 [deploy]
-startCommand = "./smartquote.api"
+startCommand = "dotnet smartquote.api.dll"
 restartPolicyType = "always"
-healthcheckPath = "/health"
+healthcheckPath = "/"
+healthcheckTimeout = 30
