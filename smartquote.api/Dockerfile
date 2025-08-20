@@ -12,7 +12,7 @@ EXPOSE 5001
 FROM mcr.microsoft.com/dotnet/sdk:9.0 AS build
 ARG BUILD_CONFIGURATION=Release
 WORKDIR /src
-COPY ["smartquote.api/smartquote.api.csproj", "smartquote.api/"]
+COPY ["./smartquote.api/smartquote.api.csproj", "./smartquote.api/"]
 RUN dotnet restore "./smartquote.api/smartquote.api.csproj"
 COPY . .
 WORKDIR "/src/smartquote.api"
@@ -27,4 +27,4 @@ RUN dotnet publish "./smartquote.api.csproj" -c $BUILD_CONFIGURATION -o /app/pub
 FROM base AS final
 WORKDIR /app
 COPY --from=publish /app/publish .
-ENTRYPOINT ["dotnet", "smartquote.api.dll"]
+ENTRYPOINT ["dotnet", "./smartquote.api.dll"]
