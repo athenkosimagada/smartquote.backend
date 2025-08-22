@@ -28,31 +28,6 @@ public class QuotesController : ControllerBase
         _updateQuoteValidator = updateQuoteRequestDto;
     }
 
-    [HttpGet]
-    public async Task<IActionResult> GetAllQuotes(int pageNumber = 1,  int pageSize = 10)
-    {
-        if (pageNumber < 1)
-        {
-            return BadRequest(new
-            {
-                Success = false,
-                Message = "Page number must be greater than or equal to 1."
-            });
-        }
-
-        if (pageSize < 1 || pageSize > 100)
-        {
-            return BadRequest(new
-            {
-                Success = false,
-                Message = "Page size must be between 1 and 100."
-            });
-        }
-
-        var response = await _quoteService.GetQuotesAsync(pageNumber, pageSize);
-        return Ok(response);
-    }
-
     [HttpGet("{id}")]
     public async Task<IActionResult> GetQuoteById(int id)
     {

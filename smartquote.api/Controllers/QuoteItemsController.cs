@@ -25,31 +25,6 @@ public class QuoteItemsController : ControllerBase
         _updateQuoteItemValidator = updateQuoteItemValidator;
     }
 
-    [HttpGet]
-    public async Task<IActionResult> GetAllQuoteItems(int pageNumber, int pageSize)
-    {
-        if (pageNumber < 1)
-        {
-            return BadRequest(new
-            {
-                Success = false,
-                Message = "Page number must be greater than or equal to 1."
-            });
-        }
-
-        if (pageSize < 1 || pageSize > 100)
-        {
-            return BadRequest(new
-            {
-                Success = false,
-                Message = "Page size must be between 1 and 100."
-            });
-        }
-
-        var response = await _quoteItemService.GetAllQuoteItemsAsync(pageNumber, pageSize);
-        return Ok(response);
-    }
-
     [HttpGet("{id}")]
     public async Task<IActionResult> GetQuoteItemById(int id)
     {
