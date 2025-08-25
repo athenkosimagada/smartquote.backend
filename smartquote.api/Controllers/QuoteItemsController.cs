@@ -64,14 +64,7 @@ public class QuoteItemsController : ControllerBase
             });
         }
 
-        if (id != request.Id)
-        {
-            return BadRequest(new
-            {
-                Success = false,
-                Message = "Item ID in the URL does not match the ID in the request body."
-            });
-        }
+        request.Id = id;
 
         var response = await _quoteItemService.UpdateQuoteItemAsync(request);
         return Ok(response);

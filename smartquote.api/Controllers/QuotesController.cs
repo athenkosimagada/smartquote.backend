@@ -6,6 +6,7 @@ using smartquote.api.DTOs.Quotes.Requests;
 using smartquote.api.DTOs.Quotes.Responses;
 using smartquote.api.Services;
 using smartquote.api.Services.Interfaces;
+using System.Security.Claims;
 
 namespace smartquote.api.Controllers;
 
@@ -46,16 +47,29 @@ public class QuotesController : ControllerBase
 
 
     [HttpPost]
-    public async Task<IActionResult> CreateQuote(CreateQuoteRequestDto request)
+    public async Task<IActionResult> CreateQuote([FromBody] CreateQuoteRequestDto request)
     {
         await _createQuoteValidator.ValidateAndThrowAsync(request);
+
+        var userId = User.FindFirst(ClaimTypes.NameIdentifier)?.Value;
+
+        if (string.IsNullOrEmpty(userId))
+        {
+            return Unauthorized(new
+            {
+                Success = false,
+                Message = "Unauthorized"
+            });
+        }
+
+        request.UserId = userId;
 
         var response = await _quoteService.CreateQuoteAsync(request);
         return CreatedAtAction(nameof(GetQuoteById), new { id = response.QuoteId }, response);
     }
 
     [HttpPut("{id}")]
-    public async Task<IActionResult> UpdateQuote(int id, UpdateQuoteRequestDto request)
+    public async Task<IActionResult> UpdateQuote(int id, [FromBody] UpdateQuoteRequestDto request)
     {
         await _updateQuoteValidator.ValidateAndThrowAsync(request);
 
@@ -68,14 +82,20 @@ public class QuotesController : ControllerBase
             });
         }
 
-        if (id != request.Id)
+        request.Id = id;
+
+        var userId = User.FindFirst(ClaimTypes.NameIdentifier)?.Value;
+
+        if (string.IsNullOrEmpty(userId))
         {
-            return BadRequest(new
+            return Unauthorized(new
             {
                 Success = false,
-                Message = "Quote ID in the URL does not match the ID in the request body."
+                Message = "Unauthorized"
             });
         }
+
+        request.UserId = userId;
 
         var response = await _quoteService.UpdateQuoteAsync(request);
         return Ok(response);
