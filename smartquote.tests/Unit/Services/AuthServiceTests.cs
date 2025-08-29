@@ -18,6 +18,7 @@ public class AuthServiceTests
     private readonly Mock<IUserRepository> _userRepository;
     private readonly Mock<IJwtService> _jwtService;
     private readonly Mock<IMapper> _mapper;
+    private readonly Mock<UserManager<User>> _userManager;
 
     private readonly IPasswordHasher<User> _passwordHasher;
     private readonly IAccountService _authService;
@@ -28,6 +29,7 @@ public class AuthServiceTests
         _jwtService = new Mock<IJwtService>();
         _passwordHasher = new PasswordHasher<User>();
         _mapper = new Mock<IMapper>();
+        _userManager = new Mock<UserManager<User>>();
 
         _unitOfWork.Setup(u => u.Users).Returns(_userRepository.Object);
 
@@ -35,7 +37,8 @@ public class AuthServiceTests
             _unitOfWork.Object,
             _passwordHasher,
             _jwtService.Object,
-            _mapper.Object);
+            _mapper.Object,
+            _userManager.Object);
     }
 
     [Fact]
@@ -61,9 +64,9 @@ public class AuthServiceTests
 
         _userRepository
             .Setup(r => r.GetByEmailAsync(request.Email))
-            .ReturnsAsync((User)null);
+            .ReturnsAsync((User)null!);
 
-        User capturedUser = null;
+        User capturedUser = null!;
         _userRepository
             .Setup(r => r.AddAsync(It.IsAny<User>()))
             .Callback<User>(u => capturedUser = u)
@@ -108,7 +111,7 @@ public class AuthServiceTests
             FirstName = "Existing",
             LastName = "User",
             FullName = "Existing User",
-            PasswordHash = _passwordHasher.HashPassword(null, "OldPassword@123")
+            PasswordHash = _passwordHasher.HashPassword(null!, "OldPassword@123")
         };
 
         _userRepository
@@ -129,7 +132,7 @@ public class AuthServiceTests
             Password = "SecurePassword@123"
         };
 
-        var hashedPassword = _passwordHasher.HashPassword(null, request.Password);
+        var hashedPassword = _passwordHasher.HashPassword(null!, request.Password);
 
         _userRepository
             .Setup(r => r.GetByEmailAsync(request.Email))
@@ -140,7 +143,7 @@ public class AuthServiceTests
             });
 
         _jwtService
-            .Setup(j => j.GenerateAccessToken(It.IsAny<LoginRequestDto>()))
+            .Setup(j => j.GenerateAccessToken(It.IsAny<User>()))
             .Returns("access_token");
 
         _jwtService
@@ -150,7 +153,6 @@ public class AuthServiceTests
         var result = await _authService.LoginAsync(request);
 
         _userRepository.Verify(r => r.GetByEmailAsync(request.Email), Times.Once);
-        _jwtService.Verify(j => j.GenerateAccessToken(request), Times.Once);
         _jwtService.Verify(j => j.GenerateRefreshToken(), Times.Once);
 
         result.Should().NotBeNull();
@@ -170,13 +172,13 @@ public class AuthServiceTests
 
         _userRepository
             .Setup(r => r.GetByEmailAsync(request.Email))
-            .ReturnsAsync((User)null);
+            .ReturnsAsync((User)null!);
 
         await Assert.ThrowsAsync<InvalidCredentialsException>(() =>
             _authService.LoginAsync(request));
 
         _userRepository.Verify(r => r.GetByEmailAsync(request.Email), Times.Once);
-        _jwtService.Verify(j => j.GenerateAccessToken(It.IsAny<LoginRequestDto>()), Times.Never);
+        _jwtService.Verify(j => j.GenerateAccessToken(It.IsAny<User>()), Times.Never);
         _jwtService.Verify(j => j.GenerateRefreshToken(), Times.Never);
     }
 
@@ -192,7 +194,7 @@ public class AuthServiceTests
         var existingUser = new User
         {
             Email = request.Email,
-            PasswordHash = _passwordHasher.HashPassword(null, "SecurePassword@123")
+            PasswordHash = _passwordHasher.HashPassword(null!, "SecurePassword@123")
         };
 
         _userRepository
@@ -203,7 +205,7 @@ public class AuthServiceTests
             _authService.LoginAsync(request));
 
         _userRepository.Verify(r => r.GetByEmailAsync(request.Email), Times.Once);
-        _jwtService.Verify(j => j.GenerateAccessToken(It.IsAny<LoginRequestDto>()), Times.Never);
+        _jwtService.Verify(j => j.GenerateAccessToken(It.IsAny<User>()), Times.Never);
         _jwtService.Verify(j => j.GenerateRefreshToken(), Times.Never);
     }
 }

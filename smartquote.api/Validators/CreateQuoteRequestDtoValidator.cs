@@ -7,6 +7,8 @@ public class CreateQuoteRequestDtoValidator : AbstractValidator<CreateQuoteReque
 {
     public CreateQuoteRequestDtoValidator()
     {
+        RuleLevelCascadeMode = CascadeMode.Stop;
+
         RuleFor(x => x.UserId)
             .NotEmpty().WithMessage("User ID is required.")
             .Must(BeAValidGuid).WithMessage("User ID must be a valid GUID.");

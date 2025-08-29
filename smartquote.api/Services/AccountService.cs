@@ -1,4 +1,5 @@
 ﻿using AutoMapper;
+using Microsoft.AspNetCore.Http.HttpResults;
 using Microsoft.AspNetCore.Identity;
 using smartquote.api.DTOs.Account;
 using smartquote.api.DTOs.Account.Responses;
@@ -6,6 +7,9 @@ using smartquote.api.Entities;
 using smartquote.api.Exceptions;
 using smartquote.api.Repositories.Interfaces;
 using smartquote.api.Services.Interfaces;
+using smartquote.api.Settings;
+using System.Security.Authentication;
+using System.Security.Claims;
 
 namespace smartquote.api.Services;
 
@@ -15,17 +19,24 @@ public class AccountService : IAccountService
     private readonly IPasswordHasher<User> _passwordHasher;
     private readonly IJwtService _jwtService;
     private readonly IMapper _mapper;
+    private readonly JwtSettings _jwtSettings;
+
+    private readonly UserManager<User> _userManager;
 
     public AccountService(
         IUnitOfWork unitOfWork,
         IPasswordHasher<User> passwordHasher,
         IJwtService jwtService,
-        IMapper mapper)
+        IMapper mapper,
+        UserManager<User> userManager,
+        JwtSettings jwtSettings)
     {
         _unitOfWork = unitOfWork;
         _passwordHasher = passwordHasher;
         _jwtService = jwtService;
         _mapper = mapper;
+        _userManager = userManager;
+        _jwtSettings = jwtSettings;
     }
     public async Task<RegisterResponseDto> RegisterAsync(RegisterRequestDto request)
     {
@@ -51,20 +62,26 @@ public class AccountService : IAccountService
         if (passwordVerificationResult == PasswordVerificationResult.Failed)
             throw new InvalidCredentialsException();
 
-        var acessToken = _jwtService.GenerateAccessToken(request);
+        var acessToken = _jwtService.GenerateAccessToken(user);
         var refreshToken = _jwtService.GenerateRefreshToken();
 
         return new LoginResponseDto
         {
+            TokenType = "Bearer",
             AccessToken = acessToken,
             RefreshToken = refreshToken,
-            ExpiresAt = DateTime.UtcNow.AddMinutes(15),
+            ExpiresAt = DateTime.UtcNow.AddMinutes(_jwtSettings.ExpirationMinutes),
         };
     }
 
-    public Task<ResendConfirmationEmailResponseDto> ResendConfirmationEmailAsync(ResendConfirmationEmailRequestDto request)
+    public async Task<ResendConfirmationEmailResponseDto> ResendConfirmationEmailAsync(ResendConfirmationEmailRequestDto request)
     {
-        throw new NotImplementedException();
+        var user = await _unitOfWork.Users.GetByEmailAsync(request.Email);
+        if (user == null) throw new NotFoundException("User with this email not found.");
+
+        if(user.EmailConfirmed) throw new BadRequestException("Email is already confirmed.");
+
+        return new ResendConfirmationEmailResponseDto();
     }
 
     public Task<ConfirmEmailResponseDto> ConfirmEmailAsync(ConfirmEmailRequestDto request)
@@ -87,14 +104,62 @@ public class AccountService : IAccountService
         throw new NotImplementedException();
     }
 
-    public Task<RefreshTokenResponseDto> RefreshTokenAsync(RefreshTokenRequestDto request)
+    public async Task<RefreshTokenResponseDto> RefreshTokenAsync(RefreshTokenRequestDto request)
     {
-        throw new NotImplementedException();
+        ClaimsPrincipal principal = _jwtService.GetPrincipalFromExpiredToken(request.AccessToken);
+
+        if (principal == null)
+        {
+            throw new AuthenticationException("Authentication failed.");
+        }
+
+        string userEmail = principal.FindFirstValue(ClaimTypes.Email)!;
+
+        if (string.IsNullOrWhiteSpace(userEmail))
+        {
+            throw new AuthenticationException("Authentication failed.");
+        }
+
+        var user = await _unitOfWork.Users.GetByEmailAsync(userEmail);
+
+        if (user == null)
+        {
+            throw new AuthenticationException("Authentication failed.");
+        }
+
+        if (user.RefreshToken != request.RefreshToken || user.RefreshTokenExpiryTime <= DateTime.UtcNow)
+        {
+            throw new AuthenticationException("Authentication failed.");
+        }
+
+        var newAccessToken = _jwtService.GenerateAccessToken(user);
+        var newRefreshToken = _jwtService.GenerateRefreshToken();
+
+        user.RefreshToken = newRefreshToken;
+        user.RefreshTokenExpiryTime = DateTime.UtcNow.AddMinutes(_jwtSettings.ExpirationMinutes);
+        await _unitOfWork.SaveChangesAsync();
+
+        return new RefreshTokenResponseDto
+        {
+            TokenType = "Bearer",
+            AccessToken = newAccessToken,
+            RefreshToken = newRefreshToken,
+            ExpiresAt = DateTime.UtcNow.AddMinutes(_jwtSettings.ExpirationMinutes),
+        };
     }
 
-    public Task<LogoutResponseDto> LogoutAsync(LogoutRequestDto request)
+    public async Task<LogoutResponseDto> LogoutAsync(LogoutRequestDto request)
     {
-        throw new NotImplementedException();
+        var user = await _unitOfWork.Users.GetByEmailAsync(request.Email);
+
+        if (user == null) return new LogoutResponseDto();
+
+        user.RefreshToken = string.Empty;
+        user.RefreshTokenExpiryTime = DateTime.UtcNow;
+
+        await _unitOfWork.SaveChangesAsync();
+
+        return new LogoutResponseDto();
     }
 
     public async Task<AccountDetailsResponseDto> GetAccountDetailsAsync(string email)

@@ -11,7 +11,7 @@ using smartquote.api.Validators;
 
 namespace smartquote.tests.Unit.Controllers;
 
-public class AuthControllerTests
+public class AccountControllerTests
 {
     private readonly Mock<IAccountService> _authService;
     private readonly IValidator<RegisterRequestDto> _registerValidator;
@@ -19,7 +19,7 @@ public class AuthControllerTests
 
     private readonly AccountController _authController;
 
-    public AuthControllerTests()
+    public AccountControllerTests()
     {
         _authService = new Mock<IAccountService>();
         _registerValidator = new RegisterRequestDtoValidator();

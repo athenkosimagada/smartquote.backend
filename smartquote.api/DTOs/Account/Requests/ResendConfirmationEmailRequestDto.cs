@@ -2,4 +2,5 @@
 
 public class ResendConfirmationEmailRequestDto
 {
+    public string Email { get; set; } = string.Empty;
 }

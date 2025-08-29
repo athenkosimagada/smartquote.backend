@@ -5,6 +5,7 @@ using Microsoft.AspNetCore.Mvc;
 using smartquote.api.DTOs.Account;
 using smartquote.api.DTOs.Account.Responses;
 using smartquote.api.Services.Interfaces;
+using smartquote.api.Validators;
 using System.Security.Claims;
 
 namespace smartquote.api.Controllers;
@@ -13,33 +14,50 @@ namespace smartquote.api.Controllers;
 [ApiController]
 public class AccountController : ControllerBase
 {
-    private readonly IAccountService _authService;
+    private readonly IAccountService _accountService;
     private readonly IValidator<RegisterRequestDto> _registerValidator;
     private readonly IValidator<LoginRequestDto> _loginValidator;
+    private readonly IValidator<RefreshTokenRequestDto> _refreshTokenValidator;
+    private readonly IValidator<LogoutRequestDto> _logoutValidator;
 
     public AccountController(
         IAccountService authService, 
         IValidator<RegisterRequestDto> registerValidator,
-        IValidator<LoginRequestDto> loginValidator)
+        IValidator<LoginRequestDto> loginValidator,
+        IValidator<RefreshTokenRequestDto> refreshTokenValidator,
+        IValidator<LogoutRequestDto> logoutValidator)
     {
-        _authService = authService;
+        _accountService = authService;
         _registerValidator = registerValidator;
         _loginValidator = loginValidator;
+        _refreshTokenValidator = refreshTokenValidator;
+        _logoutValidator = logoutValidator;
     }
 
     [HttpPost("register")]
     public async Task<ActionResult<RegisterResponseDto>> Register(RegisterRequestDto request)
     {
-        _registerValidator.ValidateAndThrow(request);
-        var response = await _authService.RegisterAsync(request);
+        await _registerValidator.ValidateAndThrowAsync(request);
+
+        var response = await _accountService.RegisterAsync(request);
         return Ok(response);
     }
 
     [HttpPost("login")]
     public async Task<ActionResult<LoginResponseDto>> Login(LoginRequestDto request)
     {
-        _loginValidator.ValidateAndThrow(request);
-        var response = await _authService.LoginAsync(request);
+        await _loginValidator.ValidateAndThrowAsync(request);
+
+        var response = await _accountService.LoginAsync(request);
+        return Ok(response);
+    }
+
+    [HttpPost("refresh-token")]
+    public async Task<ActionResult<RefreshTokenResponseDto>> RefreshToken(RefreshTokenRequestDto request)
+    {
+        await _refreshTokenValidator.ValidateAndThrowAsync(request);
+
+        var response = await _accountService.RefreshTokenAsync(request);
         return Ok(response);
     }
 
@@ -51,10 +69,10 @@ public class AccountController : ControllerBase
 
         if (string.IsNullOrEmpty(accessToken))
         {
-            return Unauthorized(new 
+            return Unauthorized(new
             {
                 Success = false,
-                Message = "Unauthorized" 
+                Message = "Unauthorized"
             });
         }
 
@@ -69,7 +87,17 @@ public class AccountController : ControllerBase
             });
         }
 
-        var response = await _authService.GetAccountDetailsAsync(userEmail);
+        var response = await _accountService.GetAccountDetailsAsync(userEmail);
+        return Ok(response);
+    }
+
+    [HttpPost("logout")]
+    [Authorize]
+    public async Task<ActionResult<LogoutResponseDto>> Logout(LogoutRequestDto request)
+    {
+        await _logoutValidator.ValidateAndThrowAsync(request);
+
+        var response = await _accountService.LogoutAsync(request);
         return Ok(response);
     }
 }

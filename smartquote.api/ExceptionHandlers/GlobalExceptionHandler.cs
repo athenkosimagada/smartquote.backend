@@ -1,6 +1,8 @@
 ﻿using Microsoft.AspNetCore.Diagnostics;
 using Microsoft.AspNetCore.Mvc;
+using Microsoft.IdentityModel.Tokens;
 using smartquote.api.Exceptions;
+using System.Security.Authentication;
 
 namespace smartquote.api.ExceptionHandlers;
 
@@ -27,6 +29,8 @@ public class GlobalExceptionHandler : IExceptionHandler
             AlreadyExistException => StatusCodes.Status400BadRequest,
             NotFoundException => StatusCodes.Status404NotFound,
             InvalidCredentialsException => StatusCodes.Status401Unauthorized,
+            AuthenticationException => StatusCodes.Status401Unauthorized,
+            SecurityTokenException => StatusCodes.Status401Unauthorized,
             _ => StatusCodes.Status500InternalServerError
         };
 

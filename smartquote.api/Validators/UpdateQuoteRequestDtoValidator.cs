@@ -7,12 +7,14 @@ public class UpdateQuoteRequestDtoValidator : AbstractValidator<UpdateQuoteReque
 {
     public UpdateQuoteRequestDtoValidator()
     {
+        RuleLevelCascadeMode = CascadeMode.Stop;
+
         RuleFor(x => x.UserId)
-            .NotEmpty().WithMessage("User ID is required.")
+            .NotEmpty().NotNull().WithMessage("User ID is required.")
             .Must(BeAValidGuid).WithMessage("User ID must be a valid GUID.");
 
         RuleFor(x => x.Customer)
-            .NotEmpty().WithMessage("Customer is required.")
+            .NotEmpty().NotNull().WithMessage("Customer is required.")
             .MaximumLength(100).WithMessage("Customer name must not exceed 100 characters.");
     }
 

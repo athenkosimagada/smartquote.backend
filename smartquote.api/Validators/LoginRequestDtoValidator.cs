@@ -7,12 +7,13 @@ public class LoginRequestDtoValidator : AbstractValidator<LoginRequestDto>
 {
     public LoginRequestDtoValidator()
     {
+        RuleLevelCascadeMode = CascadeMode.Stop;
+
         RuleFor(x => x.Email)
-            .Cascade(CascadeMode.Stop)
             .NotEmpty().WithMessage("Email is required.")
             .EmailAddress().WithMessage("Invalid email format.");
         
         RuleFor(x => x.Password)
-            .NotEmpty().WithMessage("Password is required.");
+            .NotEmpty().NotNull().WithMessage("Password is required.");
     }
 }
