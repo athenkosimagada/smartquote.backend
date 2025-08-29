@@ -1,5 +1,4 @@
 ﻿using AutoMapper;
-using smartquote.api.DTOs.Items.Responses;
 using smartquote.api.DTOs.Quotes;
 using smartquote.api.DTOs.Quotes.Requests;
 using smartquote.api.DTOs.Quotes.Responses;

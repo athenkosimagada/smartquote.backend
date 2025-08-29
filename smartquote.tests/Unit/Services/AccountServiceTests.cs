@@ -1,18 +1,20 @@
-﻿using Moq;
+﻿using AutoMapper;
 using FluentAssertions;
 using Microsoft.AspNetCore.Identity;
+using Microsoft.Extensions.Options;
+using Moq;
+using smartquote.api;
 using smartquote.api.DTOs.Account;
 using smartquote.api.Entities;
+using smartquote.api.Exceptions;
 using smartquote.api.Repositories.Interfaces;
 using smartquote.api.Services;
 using smartquote.api.Services.Interfaces;
-using smartquote.api.Exceptions;
-using smartquote.api;
-using AutoMapper;
+using smartquote.api.Settings;
 
 namespace smartquote.tests.Unit.Services;
 
-public class AuthServiceTests
+public class AccountServiceTests
 {
     private readonly Mock<IUnitOfWork> _unitOfWork;
     private readonly Mock<IUserRepository> _userRepository;
@@ -21,15 +23,30 @@ public class AuthServiceTests
     private readonly Mock<UserManager<User>> _userManager;
 
     private readonly IPasswordHasher<User> _passwordHasher;
+    private readonly IOptions<JwtSettings> _jwtSettings;
     private readonly IAccountService _authService;
-    public AuthServiceTests()
+    public AccountServiceTests()
     {
         _userRepository = new Mock<IUserRepository>();
         _unitOfWork = new Mock<IUnitOfWork>();
         _jwtService = new Mock<IJwtService>();
-        _passwordHasher = new PasswordHasher<User>();
         _mapper = new Mock<IMapper>();
-        _userManager = new Mock<UserManager<User>>();
+
+        _passwordHasher = new PasswordHasher<User>();
+
+        var store = new Mock<IUserStore<User>>();
+        _userManager = new Mock<UserManager<User>>(
+            store.Object, null!, null!, null!, null!, null!, null!, null!, null!);
+
+        _passwordHasher = new PasswordHasher<User>();
+
+        _jwtSettings = Options.Create(new JwtSettings
+        {
+            SecretKey = "ThisIsASecretKeyForJwt",
+            Issuer = "TestIssuer",
+            Audience = "TestAudience",
+            ExpirationMinutes = 60
+        });
 
         _unitOfWork.Setup(u => u.Users).Returns(_userRepository.Object);
 
@@ -38,7 +55,8 @@ public class AuthServiceTests
             _passwordHasher,
             _jwtService.Object,
             _mapper.Object,
-            _userManager.Object);
+            _userManager.Object,
+            _jwtSettings);
     }
 
     [Fact]

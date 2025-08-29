@@ -1,6 +1,7 @@
 ﻿using AutoMapper;
 using Microsoft.AspNetCore.Http.HttpResults;
 using Microsoft.AspNetCore.Identity;
+using Microsoft.Extensions.Options;
 using smartquote.api.DTOs.Account;
 using smartquote.api.DTOs.Account.Responses;
 using smartquote.api.Entities;
@@ -29,14 +30,14 @@ public class AccountService : IAccountService
         IJwtService jwtService,
         IMapper mapper,
         UserManager<User> userManager,
-        JwtSettings jwtSettings)
+        IOptions<JwtSettings> jwtSettings)
     {
         _unitOfWork = unitOfWork;
         _passwordHasher = passwordHasher;
         _jwtService = jwtService;
         _mapper = mapper;
         _userManager = userManager;
-        _jwtSettings = jwtSettings;
+        _jwtSettings = jwtSettings.Value;
     }
     public async Task<RegisterResponseDto> RegisterAsync(RegisterRequestDto request)
     {

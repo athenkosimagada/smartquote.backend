@@ -1,6 +1,7 @@
 ﻿
 using FluentAssertions;
 using FluentValidation;
+using Microsoft.AspNetCore.Http;
 using Microsoft.AspNetCore.Mvc;
 using Moq;
 using smartquote.api.Controllers;
@@ -9,6 +10,7 @@ using smartquote.api.DTOs.Quotes.Requests;
 using smartquote.api.DTOs.Quotes.Responses;
 using smartquote.api.Services.Interfaces;
 using smartquote.api.Validators;
+using System.Security.Claims;
 
 namespace smartquote.tests.Unit.Controllers;
 
@@ -36,10 +38,24 @@ public class QuoteControllerTests
     public async Task CreateQuote_ShouldReturnOkWithCreateQuoteResponseDto_WhenRequestIsValid()
     {
         // Arrange
+        var userId = "c20f35c3-7427-4705-b4bc-642c7c68309b";
+
+        var claims = new List<Claim>
+        {
+            new Claim(ClaimTypes.NameIdentifier, userId)
+        };
+        var identity = new ClaimsIdentity(claims, "TestAuthType");
+        var claimsPrincipal = new ClaimsPrincipal(identity);
+
+        _quoteController.ControllerContext = new ControllerContext
+        {
+            HttpContext = new DefaultHttpContext { User = claimsPrincipal }
+        };
+
         var request = new CreateQuoteRequestDto
         {
             Customer = "John Doe",
-            UserId = "c20f35c3-7427-4705-b4bc-642c7c68309b",
+            UserId = userId,
         };
 
         var expectedResponse = new CreateQuoteResponseDto
@@ -48,7 +64,9 @@ public class QuoteControllerTests
         };
 
         _quoteService
-            .Setup(s => s.CreateQuoteAsync(request))
+            .Setup(s => s.CreateQuoteAsync(It.Is<CreateQuoteRequestDto>(r =>
+                r.Customer == request.Customer &&
+                r.UserId == userId)))
             .ReturnsAsync(expectedResponse);
 
         // Act
@@ -171,19 +189,38 @@ public class QuoteControllerTests
     public async Task UpdateQuote_ShouldReturnOkWithUpdateQuoteResponseDto_WhenRequestIsValid()
     {
         // Arrange
+        var userId = "c20f35c3-7427-4705-b4bc-642c7c68309b";
+
+        var claims = new List<Claim>
+        {
+            new Claim(ClaimTypes.NameIdentifier, userId)
+        };
+        var identity = new ClaimsIdentity(claims, "TestAuthType");
+        var claimsPrincipal = new ClaimsPrincipal(identity);
+
+        _quoteController.ControllerContext = new ControllerContext
+        {
+            HttpContext = new DefaultHttpContext { User = claimsPrincipal }
+        };
+
         var request = new UpdateQuoteRequestDto
         {
             Id = 1,
             Customer = "Jane Doe",
-            UserId = "c20f35c3-7427-4705-b4bc-642c7c68309b",
+            UserId = userId,
         };
+
         var expectedResponse = new UpdateQuoteResponseDto
         {
             QuoteId = 1,
             Success = true
         };
+
         _quoteService
-            .Setup(s => s.UpdateQuoteAsync(request))
+            .Setup(s => s.UpdateQuoteAsync(It.Is<UpdateQuoteRequestDto>(r =>
+                r.Id == request.Id &&
+                r.Customer == request.Customer &&
+                r.UserId == userId)))
             .ReturnsAsync(expectedResponse);
 
         // Act

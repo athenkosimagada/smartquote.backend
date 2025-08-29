@@ -13,24 +13,24 @@ namespace smartquote.tests.Unit.Controllers;
 
 public class AccountControllerTests
 {
-    private readonly Mock<IAccountService> _authService;
+    private readonly Mock<IAccountService> _accountService;
     private readonly IValidator<RegisterRequestDto> _registerValidator;
     private readonly IValidator<LoginRequestDto> _loginValidator;
     private readonly IValidator<RefreshTokenRequestDto> _refreshTokenValidator;
     private readonly IValidator<LogoutRequestDto> _logoutValidator;
 
-    private readonly AccountController _authController;
+    private readonly AccountController _accountController;
 
     public AccountControllerTests()
     {
-        _authService = new Mock<IAccountService>();
+        _accountService = new Mock<IAccountService>();
         _registerValidator = new RegisterRequestDtoValidator();
         _loginValidator = new LoginRequestDtoValidator();
         _refreshTokenValidator = new RefreshTokenRequestDtoValidator();
         _logoutValidator = new LogoutRequestDtoValidator();
 
-        _authController = new AccountController(
-            _authService.Object,
+        _accountController = new AccountController(
+            _accountService.Object,
             _registerValidator,
             _loginValidator,
             _refreshTokenValidator,
@@ -49,12 +49,12 @@ public class AccountControllerTests
             Password = "Password123!"
         };
 
-        _authService
+        _accountService
             .Setup(x => x.RegisterAsync(request))
             .ReturnsAsync(new RegisterResponseDto());
 
         // Act
-        var result = await _authController.Register(request);
+        var result = await _accountController.Register(request);
 
         // Assert
         result.Should().NotBeNull();
@@ -67,7 +67,7 @@ public class AccountControllerTests
         (result.Result as OkObjectResult)!.Value.Should().BeEquivalentTo(new RegisterResponseDto());
         (result.Result as OkObjectResult)!.StatusCode.Should().Be(StatusCodes.Status200OK);
 
-        _authService.Verify(x => x.RegisterAsync(request), Times.Once);
+        _accountService.Verify(x => x.RegisterAsync(request), Times.Once);
     }
 
     [Fact]
@@ -83,7 +83,7 @@ public class AccountControllerTests
         };
 
         // Act
-        Func<Task> act = async () => await _authController.Register(request);
+        Func<Task> act = async () => await _accountController.Register(request);
 
         // Assert
         await act.Should().ThrowAsync<ValidationException>();
@@ -101,12 +101,12 @@ public class AccountControllerTests
             Password = "Password123!"
         };
 
-        _authService
+        _accountService
             .Setup(x => x.RegisterAsync(request))
             .ThrowsAsync(new Exception("Internal server error"));
 
         // Act
-        Func<Task> act = async () => await _authController.Register(request);
+        Func<Task> act = async () => await _accountController.Register(request);
 
         // Assert
         await act.Should().ThrowAsync<Exception>()
