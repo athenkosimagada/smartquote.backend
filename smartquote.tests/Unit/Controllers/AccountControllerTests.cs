@@ -16,6 +16,8 @@ public class AccountControllerTests
     private readonly Mock<IAccountService> _authService;
     private readonly IValidator<RegisterRequestDto> _registerValidator;
     private readonly IValidator<LoginRequestDto> _loginValidator;
+    private readonly IValidator<RefreshTokenRequestDto> _refreshTokenValidator;
+    private readonly IValidator<LogoutRequestDto> _logoutValidator;
 
     private readonly AccountController _authController;
 
@@ -24,11 +26,15 @@ public class AccountControllerTests
         _authService = new Mock<IAccountService>();
         _registerValidator = new RegisterRequestDtoValidator();
         _loginValidator = new LoginRequestDtoValidator();
+        _refreshTokenValidator = new RefreshTokenRequestDtoValidator();
+        _logoutValidator = new LogoutRequestDtoValidator();
 
         _authController = new AccountController(
             _authService.Object,
             _registerValidator,
-            _loginValidator);
+            _loginValidator,
+            _refreshTokenValidator,
+            _logoutValidator);
     }
 
     [Fact]

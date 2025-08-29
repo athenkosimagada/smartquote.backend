@@ -71,8 +71,10 @@ public class QuoteControllerTests
             Customer = "",
             UserId = "invalid-guid",
         };
+
         // Act
         Func<Task> act = async () => await _quoteController.CreateQuote(request);
+
         // Assert
         await act.Should().ThrowAsync<ValidationException>();
         _quoteService.Verify(s => s.CreateQuoteAsync(It.IsAny<CreateQuoteRequestDto>()), Times.Never);
@@ -114,8 +116,10 @@ public class QuoteControllerTests
     {
         // Arrange
         var id = 0;
+
         // Act
         var result = await _quoteController.GetQuoteById(id);
+
         // Assert
         result.Should().NotBeNull();
         result.Should().BeOfType<BadRequestObjectResult>();
@@ -132,8 +136,10 @@ public class QuoteControllerTests
     {
         // Arrange
         var id = 1;
+
         // Act
         var result = await _quoteController.DeleteQuote(id);
+
         // Assert
         result.Should().NotBeNull();
         result.Should().BeOfType<NoContentResult>();
@@ -146,8 +152,10 @@ public class QuoteControllerTests
     {
         // Arrange
         var id = 0;
+
         // Act
         var result = await _quoteController.DeleteQuote(id);
+
         // Assert
         result.Should().NotBeNull();
         result.Should().BeOfType<BadRequestObjectResult>();
@@ -177,8 +185,10 @@ public class QuoteControllerTests
         _quoteService
             .Setup(s => s.UpdateQuoteAsync(request))
             .ReturnsAsync(expectedResponse);
+
         // Act
         var result = await _quoteController.UpdateQuote(1, request);
+
         // Assert
         result.Should().NotBeNull();
         result.Should().BeOfType<OkObjectResult>();
@@ -197,8 +207,10 @@ public class QuoteControllerTests
             Customer = "",
             UserId = "invalid-guid",
         };
+
         // Act
         Func<Task> act = async () => await _quoteController.UpdateQuote(0, request);
+
         // Assert
         await act.Should().ThrowAsync<ValidationException>();
         _quoteService.Verify(s => s.UpdateQuoteAsync(It.IsAny<UpdateQuoteRequestDto>()), Times.Never);
