@@ -13,7 +13,7 @@ env:
 
 jobs:
   build-and-test:
-    name: Build and Test Quotes Management
+    name: Build and Test Account Management
     runs-on: ubuntu-latest
 
     steps:
