@@ -10,7 +10,7 @@ using smartquote.api.Exceptions;
 using smartquote.api.Repositories.Interfaces;
 using smartquote.api.Services;
 using smartquote.api.Services.Interfaces;
-using smartquote.api.Settings;
+using smartquote.api.Options;
 
 namespace smartquote.tests.Unit.Services;
 
@@ -23,7 +23,7 @@ public class AccountServiceTests
     private readonly Mock<UserManager<User>> _userManager;
 
     private readonly IPasswordHasher<User> _passwordHasher;
-    private readonly IOptions<JwtSettings> _jwtSettings;
+    private readonly IOptions<JwtOptions> _jwtSettings;
     private readonly IAccountService _authService;
     public AccountServiceTests()
     {
@@ -40,7 +40,7 @@ public class AccountServiceTests
 
         _passwordHasher = new PasswordHasher<User>();
 
-        _jwtSettings = Options.Create(new JwtSettings
+        _jwtSettings = Options.Create(new JwtOptions
         {
             SecretKey = "ThisIsASecretKeyForJwt",
             Issuer = "TestIssuer",

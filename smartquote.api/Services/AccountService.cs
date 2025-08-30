@@ -8,7 +8,7 @@ using smartquote.api.Entities;
 using smartquote.api.Exceptions;
 using smartquote.api.Repositories.Interfaces;
 using smartquote.api.Services.Interfaces;
-using smartquote.api.Settings;
+using smartquote.api.Options;
 using System.Security.Authentication;
 using System.Security.Claims;
 
@@ -19,8 +19,9 @@ public class AccountService : IAccountService
     private readonly IUnitOfWork _unitOfWork;
     private readonly IPasswordHasher<User> _passwordHasher;
     private readonly IJwtService _jwtService;
+    private readonly IEmailService _emailService;
     private readonly IMapper _mapper;
-    private readonly JwtSettings _jwtSettings;
+    private readonly JwtOptions _jwtSettings;
 
     private readonly UserManager<User> _userManager;
 
@@ -28,13 +29,15 @@ public class AccountService : IAccountService
         IUnitOfWork unitOfWork,
         IPasswordHasher<User> passwordHasher,
         IJwtService jwtService,
+        IEmailService emailService,
         IMapper mapper,
         UserManager<User> userManager,
-        IOptions<JwtSettings> jwtSettings)
+        IOptions<JwtOptions> jwtSettings)
     {
         _unitOfWork = unitOfWork;
         _passwordHasher = passwordHasher;
         _jwtService = jwtService;
+        _emailService = emailService;
         _mapper = mapper;
         _userManager = userManager;
         _jwtSettings = jwtSettings.Value;
@@ -82,6 +85,16 @@ public class AccountService : IAccountService
 
         if(user.EmailConfirmed) throw new BadRequestException("Email is already confirmed.");
 
+        var code = await _userManager.GenerateEmailConfirmationTokenAsync(user);
+
+        var body = $"<html>" +
+            $"<body>" +
+            $"<p>Dear {user.FirstName},</p>" +
+            $"<p>Thank you for registering with us. Please use the confirmation code below to verify your email address:</p>" +
+            $"<h2>{code}</h2>" +
+            $"</body></html>";
+
+        await _emailService.SendEmailAsync(user.Email!, "Email Confirmation", body);
         return new ResendConfirmationEmailResponseDto();
     }
 

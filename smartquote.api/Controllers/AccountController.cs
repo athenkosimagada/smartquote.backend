@@ -18,6 +18,7 @@ public class AccountController : ControllerBase
     private readonly IValidator<RegisterRequestDto> _registerValidator;
     private readonly IValidator<LoginRequestDto> _loginValidator;
     private readonly IValidator<RefreshTokenRequestDto> _refreshTokenValidator;
+    private readonly IValidator<ResendConfirmationEmailRequestDto> _resendConfirmationEmailValidator;
     private readonly IValidator<LogoutRequestDto> _logoutValidator;
 
     public AccountController(
@@ -25,12 +26,14 @@ public class AccountController : ControllerBase
         IValidator<RegisterRequestDto> registerValidator,
         IValidator<LoginRequestDto> loginValidator,
         IValidator<RefreshTokenRequestDto> refreshTokenValidator,
+        IValidator<ResendConfirmationEmailRequestDto> resendConfirmationEmailValidator,
         IValidator<LogoutRequestDto> logoutValidator)
     {
         _accountService = authService;
         _registerValidator = registerValidator;
         _loginValidator = loginValidator;
         _refreshTokenValidator = refreshTokenValidator;
+        _resendConfirmationEmailValidator = resendConfirmationEmailValidator;
         _logoutValidator = logoutValidator;
     }
 
@@ -88,6 +91,15 @@ public class AccountController : ControllerBase
         }
 
         var response = await _accountService.GetAccountDetailsAsync(userEmail);
+        return Ok(response);
+    }
+
+    [HttpPost("resendConfirmationEmail")]
+    public async Task<ActionResult<ResendConfirmationEmailResponseDto>> ResendConfirmationEmail(ResendConfirmationEmailRequestDto request)
+    {
+        await _resendConfirmationEmailValidator.ValidateAndThrowAsync(request);
+
+        var response = await _accountService.ResendConfirmationEmailAsync(request);
         return Ok(response);
     }
 

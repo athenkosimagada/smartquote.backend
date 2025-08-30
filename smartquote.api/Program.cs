@@ -40,6 +40,7 @@ builder.Services.AddScoped<IAccountService, AccountService>();
 builder.Services.AddScoped<IQuoteItemService, QuoteItemService>();
 builder.Services.AddScoped<IQuoteService, QuoteService>();
 builder.Services.AddScoped<IJwtService, JwtService>();
+builder.Services.AddScoped<IEmailService, EmailService>();
 
 builder.Services.AddScoped<IPasswordHasher<User>, PasswordHasher<User>>();
 builder.Services.AddIdentity<User, IdentityRole>(options =>
@@ -48,6 +49,8 @@ builder.Services.AddIdentity<User, IdentityRole>(options =>
     options.Password.RequireNonAlphanumeric = false;
     options.Password.RequireUppercase = false;
     options.Password.RequireDigit = true;
+
+    options.Tokens.EmailConfirmationTokenProvider = TokenOptions.DefaultEmailProvider;
 })
 .AddEntityFrameworkStores<SmartQuoteDbContext>()
 .AddDefaultTokenProviders();

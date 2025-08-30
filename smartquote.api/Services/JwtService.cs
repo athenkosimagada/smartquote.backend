@@ -1,9 +1,8 @@
 ﻿using Microsoft.Extensions.Options;
 using Microsoft.IdentityModel.Tokens;
-using smartquote.api.DTOs.Account;
 using smartquote.api.Entities;
 using smartquote.api.Services.Interfaces;
-using smartquote.api.Settings;
+using smartquote.api.Options;
 using System.IdentityModel.Tokens.Jwt;
 using System.Security.Claims;
 using System.Security.Cryptography;
@@ -13,9 +12,9 @@ namespace smartquote.api.Services;
 
 public class JwtService : IJwtService
 {
-    private readonly JwtSettings _jwtSettings;
+    private readonly JwtOptions _jwtSettings;
 
-    public JwtService(IOptions<JwtSettings> jwtOptions)
+    public JwtService(IOptions<JwtOptions> jwtOptions)
     {
         _jwtSettings = jwtOptions.Value;
     }

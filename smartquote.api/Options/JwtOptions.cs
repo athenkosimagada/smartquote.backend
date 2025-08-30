@@ -1,6 +1,6 @@
-﻿namespace smartquote.api.Settings;
+﻿namespace smartquote.api.Options;
 
-public class JwtSettings
+public class JwtOptions
 {
     public string SecretKey { get; set; } = string.Empty;
     public string Issuer { get; set; } = string.Empty;  
