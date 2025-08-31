@@ -18,6 +18,7 @@ public class AccountControllerTests
     private readonly IValidator<LoginRequestDto> _loginValidator;
     private readonly IValidator<RefreshTokenRequestDto> _refreshTokenValidator;
     private readonly IValidator<LogoutRequestDto> _logoutValidator;
+    private readonly IValidator<ResendConfirmationEmailRequestDto> _resendConfirmationEmailValidator;
 
     private readonly AccountController _accountController;
 
@@ -28,12 +29,14 @@ public class AccountControllerTests
         _loginValidator = new LoginRequestDtoValidator();
         _refreshTokenValidator = new RefreshTokenRequestDtoValidator();
         _logoutValidator = new LogoutRequestDtoValidator();
+        _resendConfirmationEmailValidator = new ResendConfirmationEmailRequestDtoValidator();
 
         _accountController = new AccountController(
             _accountService.Object,
             _registerValidator,
             _loginValidator,
             _refreshTokenValidator,
+            _resendConfirmationEmailValidator,
             _logoutValidator);
     }
 

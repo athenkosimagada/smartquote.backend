@@ -15,5 +15,5 @@ public interface IAccountService
     Task<ChangePasswordResponseDto> ChangePasswordAsync(ChangePasswordRequestDto request);
     Task<ResetPasswordResponseDto> ResetPasswordAsync(ResetPasswordRequestDto request);
 
-    Task<AccountDetailsResponseDto> GetAccountDetailsAsync(string email);
+    Task<AccountInfoResponseDto> GetAccountDetailsAsync(string email);
 }

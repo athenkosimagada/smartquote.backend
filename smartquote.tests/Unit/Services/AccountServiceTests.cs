@@ -19,17 +19,20 @@ public class AccountServiceTests
     private readonly Mock<IUnitOfWork> _unitOfWork;
     private readonly Mock<IUserRepository> _userRepository;
     private readonly Mock<IJwtService> _jwtService;
+    private readonly Mock<IEmailService> _emailService;
     private readonly Mock<IMapper> _mapper;
     private readonly Mock<UserManager<User>> _userManager;
 
     private readonly IPasswordHasher<User> _passwordHasher;
-    private readonly IOptions<JwtOptions> _jwtSettings;
+    private readonly IOptions<JwtOptions> _jwtOptions;
     private readonly IAccountService _authService;
+
     public AccountServiceTests()
     {
         _userRepository = new Mock<IUserRepository>();
         _unitOfWork = new Mock<IUnitOfWork>();
         _jwtService = new Mock<IJwtService>();
+        _emailService = new Mock<IEmailService>();
         _mapper = new Mock<IMapper>();
 
         _passwordHasher = new PasswordHasher<User>();
@@ -40,7 +43,7 @@ public class AccountServiceTests
 
         _passwordHasher = new PasswordHasher<User>();
 
-        _jwtSettings = Options.Create(new JwtOptions
+        _jwtOptions = Options.Create(new JwtOptions
         {
             SecretKey = "ThisIsASecretKeyForJwt",
             Issuer = "TestIssuer",
@@ -54,9 +57,10 @@ public class AccountServiceTests
             _unitOfWork.Object,
             _passwordHasher,
             _jwtService.Object,
+            _emailService.Object,
             _mapper.Object,
             _userManager.Object,
-            _jwtSettings);
+            _jwtOptions);
     }
 
     [Fact]

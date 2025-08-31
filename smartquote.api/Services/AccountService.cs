@@ -61,6 +61,8 @@ public class AccountService : IAccountService
         var user = await _unitOfWork.Users.GetByEmailAsync(request.Email);
         if (user == null) throw new InvalidCredentialsException();
 
+        if (!user.EmailConfirmed) throw new EmailNotConfirmedException("Email not confirmed.");
+
         var passwordVerificationResult = _passwordHasher.VerifyHashedPassword(user, user.PasswordHash!, request.Password);
 
         if (passwordVerificationResult == PasswordVerificationResult.Failed)
@@ -98,9 +100,20 @@ public class AccountService : IAccountService
         return new ResendConfirmationEmailResponseDto();
     }
 
-    public Task<ConfirmEmailResponseDto> ConfirmEmailAsync(ConfirmEmailRequestDto request)
+    public async Task<ConfirmEmailResponseDto> ConfirmEmailAsync(ConfirmEmailRequestDto request)
     {
-        throw new NotImplementedException();
+        var user = await _unitOfWork.Users.GetByEmailAsync(request.Email);
+        if (user == null) throw new NotFoundException("User with this email not found.");
+
+        if (user.EmailConfirmed) throw new BadRequestException("Email is already confirmed.");
+
+        var result = await _userManager.ConfirmEmailAsync(user, request.Code);
+        if (!result.Succeeded)
+        {
+            throw new BadRequestException("Invalid confirmation code.");
+        }
+
+        return new ConfirmEmailResponseDto();
     }
 
     public Task<ForgotPasswordResponseDto> ForgotPasswordAsync(ForgotPasswordRequestDto request)
@@ -176,12 +189,12 @@ public class AccountService : IAccountService
         return new LogoutResponseDto();
     }
 
-    public async Task<AccountDetailsResponseDto> GetAccountDetailsAsync(string email)
+    public async Task<AccountInfoResponseDto> GetAccountDetailsAsync(string email)
     {
         var user = await _unitOfWork.Users.GetByEmailAsync(email);
         if (user == null) throw new NotFoundException("User not found.");
         var accountDetails = _mapper.Map<AccountDetailsDto>(user);
-        return new AccountDetailsResponseDto
+        return new AccountInfoResponseDto
         {
             AccountDetails = accountDetails
         };

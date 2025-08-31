@@ -31,6 +31,7 @@ public class GlobalExceptionHandler : IExceptionHandler
             InvalidCredentialsException => StatusCodes.Status401Unauthorized,
             AuthenticationException => StatusCodes.Status401Unauthorized,
             SecurityTokenException => StatusCodes.Status401Unauthorized,
+            EmailNotConfirmedException => StatusCodes.Status403Forbidden,
             _ => StatusCodes.Status500InternalServerError
         };
 

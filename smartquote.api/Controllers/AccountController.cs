@@ -64,9 +64,9 @@ public class AccountController : ControllerBase
         return Ok(response);
     }
 
-    [HttpGet("details")]
+    [HttpGet("manage/info")]
     [Authorize]
-    public async Task<ActionResult<AccountDetailsResponseDto>> GetUserDetails()
+    public async Task<ActionResult<AccountInfoResponseDto>> GetUserInfor()
     {
         var accessToken = Request.Headers["Authorization"].ToString().Replace("Bearer ", "");
 
@@ -100,6 +100,13 @@ public class AccountController : ControllerBase
         await _resendConfirmationEmailValidator.ValidateAndThrowAsync(request);
 
         var response = await _accountService.ResendConfirmationEmailAsync(request);
+        return Ok(response);
+    }
+
+    [HttpPost("confirmEmail")]
+    public async Task<ActionResult<ConfirmEmailResponseDto>> ConfirmEmail(ConfirmEmailRequestDto result)
+    {
+        var response = await _accountService.ConfirmEmailAsync(result);
         return Ok(response);
     }
 

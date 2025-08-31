@@ -9,6 +9,7 @@ public class UserRepository : Repository<User>, IUserRepository
 {
     public UserRepository(SmartQuoteDbContext context)
         : base(context) { }
+
     public async Task<User?> GetByEmailAsync(string email)
     {
         return await SmartQuoteDbContext.Users.FirstOrDefaultAsync(u => u.Email == email);
