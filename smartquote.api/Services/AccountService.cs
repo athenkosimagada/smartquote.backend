@@ -116,9 +116,25 @@ public class AccountService : IAccountService
         return new ConfirmEmailResponseDto();
     }
 
-    public Task<ForgotPasswordResponseDto> ForgotPasswordAsync(ForgotPasswordRequestDto request)
+    public async Task<ForgotPasswordResponseDto> ForgotPasswordAsync(ForgotPasswordRequestDto request)
     {
-        throw new NotImplementedException();
+        var user = await _unitOfWork.Users.GetByEmailAsync(request.Email);
+        if (user == null) throw new NotFoundException("User with this email not found.");
+
+        if (!user.EmailConfirmed) throw new BadRequestException("Email is not confirmed. Please confirm your email before resetting password.");
+
+        var code = await _userManager.GeneratePasswordResetTokenAsync(user);
+
+        var body = $"<html>" +
+            $"<body>" +
+            $"<p>Dear {user.FirstName},</p>" +
+            $"<p>You requested to reset your password. Please use the code below to reset it:</p>" +
+            $"<h2>{code}</h2>" +
+            $"</body></html>";
+
+        await _emailService.SendEmailAsync(user.Email!, "Password Reset", body);
+
+        return new ForgotPasswordResponseDto();
     }
 
     public Task<ChangePasswordResponseDto> ChangePasswordAsync(ChangePasswordRequestDto request)
@@ -175,6 +191,17 @@ public class AccountService : IAccountService
         };
     }
 
+    public async Task<AccountInfoResponseDto> GetAccountDetailsAsync(string email)
+    {
+        var user = await _unitOfWork.Users.GetByEmailAsync(email);
+        if (user == null) throw new NotFoundException("User not found.");
+        var accountDetails = _mapper.Map<AccountDetailsDto>(user);
+        return new AccountInfoResponseDto
+        {
+            AccountDetails = accountDetails
+        };
+    }
+
     public async Task<LogoutResponseDto> LogoutAsync(LogoutRequestDto request)
     {
         var user = await _unitOfWork.Users.GetByEmailAsync(request.Email);
@@ -187,16 +214,5 @@ public class AccountService : IAccountService
         await _unitOfWork.SaveChangesAsync();
 
         return new LogoutResponseDto();
-    }
-
-    public async Task<AccountInfoResponseDto> GetAccountDetailsAsync(string email)
-    {
-        var user = await _unitOfWork.Users.GetByEmailAsync(email);
-        if (user == null) throw new NotFoundException("User not found.");
-        var accountDetails = _mapper.Map<AccountDetailsDto>(user);
-        return new AccountInfoResponseDto
-        {
-            AccountDetails = accountDetails
-        };
     }
 }

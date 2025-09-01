@@ -19,6 +19,7 @@ public class AccountController : ControllerBase
     private readonly IValidator<LoginRequestDto> _loginValidator;
     private readonly IValidator<RefreshTokenRequestDto> _refreshTokenValidator;
     private readonly IValidator<ResendConfirmationEmailRequestDto> _resendConfirmationEmailValidator;
+    private readonly IValidator<ForgotPasswordRequestDto> _forgotPasswordValidator;
     private readonly IValidator<LogoutRequestDto> _logoutValidator;
 
     public AccountController(
@@ -27,6 +28,7 @@ public class AccountController : ControllerBase
         IValidator<LoginRequestDto> loginValidator,
         IValidator<RefreshTokenRequestDto> refreshTokenValidator,
         IValidator<ResendConfirmationEmailRequestDto> resendConfirmationEmailValidator,
+        IValidator<ForgotPasswordRequestDto> forgotPasswordValidator,
         IValidator<LogoutRequestDto> logoutValidator)
     {
         _accountService = authService;
@@ -34,6 +36,7 @@ public class AccountController : ControllerBase
         _loginValidator = loginValidator;
         _refreshTokenValidator = refreshTokenValidator;
         _resendConfirmationEmailValidator = resendConfirmationEmailValidator;
+        _forgotPasswordValidator = forgotPasswordValidator;
         _logoutValidator = logoutValidator;
     }
 
@@ -55,12 +58,37 @@ public class AccountController : ControllerBase
         return Ok(response);
     }
 
-    [HttpPost("refresh-token")]
+    [HttpPost("refreshToken")]
     public async Task<ActionResult<RefreshTokenResponseDto>> RefreshToken(RefreshTokenRequestDto request)
     {
         await _refreshTokenValidator.ValidateAndThrowAsync(request);
 
         var response = await _accountService.RefreshTokenAsync(request);
+        return Ok(response);
+    }
+
+    [HttpPost("resendConfirmationEmail")]
+    public async Task<ActionResult<ResendConfirmationEmailResponseDto>> ResendConfirmationEmail(ResendConfirmationEmailRequestDto request)
+    {
+        await _resendConfirmationEmailValidator.ValidateAndThrowAsync(request);
+
+        var response = await _accountService.ResendConfirmationEmailAsync(request);
+        return Ok(response);
+    }
+
+    [HttpPost("confirmEmail")]
+    public async Task<ActionResult<ConfirmEmailResponseDto>> ConfirmEmail(ConfirmEmailRequestDto result)
+    {
+        var response = await _accountService.ConfirmEmailAsync(result);
+        return Ok(response);
+    }
+
+    [HttpPost("forgotPassword")]
+    public async Task<ActionResult<ForgotPasswordResponseDto>> ForgotPassword(ForgotPasswordRequestDto request)
+    {
+        await _forgotPasswordValidator.ValidateAndThrowAsync(request);
+
+        var response = await _accountService.ForgotPasswordAsync(request);
         return Ok(response);
     }
 
@@ -91,22 +119,6 @@ public class AccountController : ControllerBase
         }
 
         var response = await _accountService.GetAccountDetailsAsync(userEmail);
-        return Ok(response);
-    }
-
-    [HttpPost("resendConfirmationEmail")]
-    public async Task<ActionResult<ResendConfirmationEmailResponseDto>> ResendConfirmationEmail(ResendConfirmationEmailRequestDto request)
-    {
-        await _resendConfirmationEmailValidator.ValidateAndThrowAsync(request);
-
-        var response = await _accountService.ResendConfirmationEmailAsync(request);
-        return Ok(response);
-    }
-
-    [HttpPost("confirmEmail")]
-    public async Task<ActionResult<ConfirmEmailResponseDto>> ConfirmEmail(ConfirmEmailRequestDto result)
-    {
-        var response = await _accountService.ConfirmEmailAsync(result);
         return Ok(response);
     }
 

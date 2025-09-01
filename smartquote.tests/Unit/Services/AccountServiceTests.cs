@@ -161,7 +161,8 @@ public class AccountServiceTests
             .ReturnsAsync(new User
             {
                 Email = request.Email,
-                PasswordHash = hashedPassword
+                PasswordHash = hashedPassword,
+                EmailConfirmed = true
             });
 
         _jwtService
@@ -216,7 +217,8 @@ public class AccountServiceTests
         var existingUser = new User
         {
             Email = request.Email,
-            PasswordHash = _passwordHasher.HashPassword(null!, "SecurePassword@123")
+            PasswordHash = _passwordHasher.HashPassword(null!, "SecurePassword@123"),
+            EmailConfirmed = true
         };
 
         _userRepository
