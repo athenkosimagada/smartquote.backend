@@ -20,6 +20,7 @@ public class AccountController : ControllerBase
     private readonly IValidator<RefreshTokenRequestDto> _refreshTokenValidator;
     private readonly IValidator<ResendConfirmationEmailRequestDto> _resendConfirmationEmailValidator;
     private readonly IValidator<ForgotPasswordRequestDto> _forgotPasswordValidator;
+    private readonly IValidator<ResetPasswordRequestDto> _resetPasswordValidator;
     private readonly IValidator<LogoutRequestDto> _logoutValidator;
 
     public AccountController(
@@ -29,6 +30,7 @@ public class AccountController : ControllerBase
         IValidator<RefreshTokenRequestDto> refreshTokenValidator,
         IValidator<ResendConfirmationEmailRequestDto> resendConfirmationEmailValidator,
         IValidator<ForgotPasswordRequestDto> forgotPasswordValidator,
+        IValidator<ResetPasswordRequestDto> resetPasswordValidator,
         IValidator<LogoutRequestDto> logoutValidator)
     {
         _accountService = authService;
@@ -37,6 +39,7 @@ public class AccountController : ControllerBase
         _refreshTokenValidator = refreshTokenValidator;
         _resendConfirmationEmailValidator = resendConfirmationEmailValidator;
         _forgotPasswordValidator = forgotPasswordValidator;
+        _resetPasswordValidator = resetPasswordValidator;
         _logoutValidator = logoutValidator;
     }
 
@@ -89,6 +92,15 @@ public class AccountController : ControllerBase
         await _forgotPasswordValidator.ValidateAndThrowAsync(request);
 
         var response = await _accountService.ForgotPasswordAsync(request);
+        return Ok(response);
+    }
+
+    [HttpPost("resetPassword")]
+    public async Task<ActionResult<ResetPasswordResponseDto>> ResetPassword(ResetPasswordRequestDto request)
+    {
+        await _resetPasswordValidator.ValidateAndThrowAsync(request);
+
+        var response = await _accountService.ResetPasswordAsync(request);
         return Ok(response);
     }
 

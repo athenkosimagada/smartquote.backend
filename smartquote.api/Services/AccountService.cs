@@ -110,7 +110,7 @@ public class AccountService : IAccountService
         var result = await _userManager.ConfirmEmailAsync(user, request.Code);
         if (!result.Succeeded)
         {
-            throw new BadRequestException("Invalid confirmation code.");
+            throw new BadRequestException("Confirmation email failed.");
         }
 
         return new ConfirmEmailResponseDto();
@@ -142,9 +142,18 @@ public class AccountService : IAccountService
         throw new NotImplementedException();
     }
 
-    public Task<ResetPasswordResponseDto> ResetPasswordAsync(ResetPasswordRequestDto request)
+    public async Task<ResetPasswordResponseDto> ResetPasswordAsync(ResetPasswordRequestDto request)
     {
-        throw new NotImplementedException();
+        var user = await _unitOfWork.Users.GetByEmailAsync(request.Email);
+        if (user == null) throw new NotFoundException("User with this email not found.");
+
+        var result = await _userManager.ResetPasswordAsync(user, request.Code, request.NewPassword);
+        if (!result.Succeeded)
+        {
+            throw new BadRequestException("Password reset failed");
+        }
+
+        return new ResetPasswordResponseDto();
     }
 
     public async Task<RefreshTokenResponseDto> RefreshTokenAsync(RefreshTokenRequestDto request)
