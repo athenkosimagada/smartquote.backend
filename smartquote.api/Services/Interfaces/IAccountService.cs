@@ -12,7 +12,7 @@ public interface IAccountService
     Task<ConfirmEmailResponseDto> ConfirmEmailAsync(ConfirmEmailRequestDto request);
     Task<ForgotPasswordResponseDto> ForgotPasswordAsync(ForgotPasswordRequestDto request);
     Task<RefreshTokenResponseDto> RefreshTokenAsync(RefreshTokenRequestDto request);
-    Task<ChangePasswordResponseDto> ChangePasswordAsync(ChangePasswordRequestDto request);
+    Task<ChangePasswordResponseDto> ChangePasswordAsync(string userEmail, ChangePasswordRequestDto request);
     Task<ResetPasswordResponseDto> ResetPasswordAsync(ResetPasswordRequestDto request);
 
     Task<AccountInfoResponseDto> GetAccountDetailsAsync(string email);

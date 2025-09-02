@@ -20,6 +20,7 @@ public class AccountControllerTests
     private readonly IValidator<ResendConfirmationEmailRequestDto> _resendConfirmationEmailValidator;
     private readonly IValidator<ForgotPasswordRequestDto> _forgetPasswordValidator;
     private readonly IValidator<ResetPasswordRequestDto> _resetPasswordValidator;
+    private readonly IValidator<ChangePasswordRequestDto> _changePasswordValidator;
     private readonly IValidator<LogoutRequestDto> _logoutValidator;
 
     private readonly AccountController _accountController;
@@ -33,6 +34,7 @@ public class AccountControllerTests
         _resendConfirmationEmailValidator = new ResendConfirmationEmailRequestDtoValidator();
         _forgetPasswordValidator = new ForgotPasswordRequestDtoValidator();
         _resetPasswordValidator = new ResetPasswordRequestDtoValidator();
+        _changePasswordValidator = new ChangePasswordRequestDtoValidator();
         _logoutValidator = new LogoutRequestDtoValidator();
 
 
@@ -44,6 +46,7 @@ public class AccountControllerTests
             _resendConfirmationEmailValidator,
             _forgetPasswordValidator,
             _resetPasswordValidator,
+            _changePasswordValidator,
             _logoutValidator);
     }
 

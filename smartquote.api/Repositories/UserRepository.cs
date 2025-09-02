@@ -14,6 +14,10 @@ public class UserRepository : Repository<User>, IUserRepository
     {
         return await SmartQuoteDbContext.Users.FirstOrDefaultAsync(u => u.Email == email);
     }
+    public Task<User?> GetByIdAsync(string userId)
+    {
+        return SmartQuoteDbContext.Users.FirstOrDefaultAsync(u => u.Id == userId);
+    }
 
     public void Update(User user)
     {

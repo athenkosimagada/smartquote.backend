@@ -43,16 +43,14 @@ builder.Services.AddScoped<IJwtService, JwtService>();
 builder.Services.AddScoped<IEmailService, EmailService>();
 
 builder.Services.AddScoped<IPasswordHasher<User>, PasswordHasher<User>>();
-builder.Services.AddIdentity<User, IdentityRole>(options =>
+builder.Services.AddIdentityCore<User>(options =>
 {
     options.User.RequireUniqueEmail = true;
+    options.Password.RequireDigit = true;
     options.Password.RequireNonAlphanumeric = false;
     options.Password.RequireUppercase = false;
-    options.Password.RequireDigit = true;
-
-    options.Tokens.EmailConfirmationTokenProvider = TokenOptions.DefaultEmailProvider;
-    options.Tokens.PasswordResetTokenProvider = TokenOptions.DefaultEmailProvider;
 })
+.AddRoles<IdentityRole>()
 .AddEntityFrameworkStores<SmartQuoteDbContext>()
 .AddDefaultTokenProviders();
 
@@ -83,10 +81,10 @@ builder.Services.AddAuthentication(JwtBearerDefaults.AuthenticationScheme)
             ValidateAudience = true,
             ValidateLifetime = true,
             ValidateIssuerSigningKey = true,
-            ValidIssuer = builder.Configuration["JwtSettings:Issuer"],
-            ValidAudience = builder.Configuration["JwtSettings:Audience"],
+            ValidIssuer = builder.Configuration["JwtOptions:Issuer"],
+            ValidAudience = builder.Configuration["JwtOptions:Audience"],
             IssuerSigningKey = new SymmetricSecurityKey(
-                Encoding.UTF8.GetBytes(builder.Configuration["JwtSettings:SecretKey"] ?? throw new Exception("Missing key for jwt"))),
+                Encoding.UTF8.GetBytes(builder.Configuration["JwtOptions:SecretKey"] ?? throw new Exception("Missing key for jwt"))),
             ClockSkew = TimeSpan.Zero
         };
 
@@ -107,6 +105,7 @@ builder.Services.AddAuthentication(JwtBearerDefaults.AuthenticationScheme)
             }
         };
     });
+builder.Services.AddAuthorization();
 
 var app = builder.Build();
 

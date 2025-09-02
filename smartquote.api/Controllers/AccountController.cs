@@ -21,6 +21,7 @@ public class AccountController : ControllerBase
     private readonly IValidator<ResendConfirmationEmailRequestDto> _resendConfirmationEmailValidator;
     private readonly IValidator<ForgotPasswordRequestDto> _forgotPasswordValidator;
     private readonly IValidator<ResetPasswordRequestDto> _resetPasswordValidator;
+    private readonly IValidator<ChangePasswordRequestDto> _changePasswordValidator;
     private readonly IValidator<LogoutRequestDto> _logoutValidator;
 
     public AccountController(
@@ -31,6 +32,7 @@ public class AccountController : ControllerBase
         IValidator<ResendConfirmationEmailRequestDto> resendConfirmationEmailValidator,
         IValidator<ForgotPasswordRequestDto> forgotPasswordValidator,
         IValidator<ResetPasswordRequestDto> resetPasswordValidator,
+        IValidator<ChangePasswordRequestDto> changePasswordValidator,
         IValidator<LogoutRequestDto> logoutValidator)
     {
         _accountService = authService;
@@ -40,6 +42,7 @@ public class AccountController : ControllerBase
         _resendConfirmationEmailValidator = resendConfirmationEmailValidator;
         _forgotPasswordValidator = forgotPasswordValidator;
         _resetPasswordValidator = resetPasswordValidator;
+        _changePasswordValidator = changePasswordValidator;
         _logoutValidator = logoutValidator;
     }
 
@@ -101,6 +104,38 @@ public class AccountController : ControllerBase
         await _resetPasswordValidator.ValidateAndThrowAsync(request);
 
         var response = await _accountService.ResetPasswordAsync(request);
+        return Ok(response);
+    }
+
+    [HttpPost("changePassword")]
+    [Authorize]
+    public async Task<ActionResult<ChangePasswordResponseDto>> ChangePassword(ChangePasswordRequestDto request)
+    {
+        var accessToken = Request.Headers["Authorization"].ToString().Replace("Bearer ", "");
+
+        if (string.IsNullOrEmpty(accessToken))
+        {
+            return Unauthorized(new
+            {
+                Success = false,
+                Message = "Unauthorized"
+            });
+        }
+
+        var userEmail = User.FindFirst(ClaimTypes.Name)?.Value;
+
+        if (string.IsNullOrEmpty(userEmail))
+        {
+            return Unauthorized(new
+            {
+                Success = false,
+                Message = "Unauthorized"
+            });
+        }
+
+        await _changePasswordValidator.ValidateAndThrowAsync(request);
+
+        var response = await _accountService.ChangePasswordAsync(userEmail, request);
         return Ok(response);
     }
 

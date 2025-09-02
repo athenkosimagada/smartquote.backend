@@ -137,9 +137,20 @@ public class AccountService : IAccountService
         return new ForgotPasswordResponseDto();
     }
 
-    public Task<ChangePasswordResponseDto> ChangePasswordAsync(ChangePasswordRequestDto request)
+    public async Task<ChangePasswordResponseDto> ChangePasswordAsync(string userEmail, ChangePasswordRequestDto request)
     {
-        throw new NotImplementedException();
+        var user = await _unitOfWork.Users.GetByEmailAsync(userEmail);
+        if (user == null) throw new AuthenticationException("Authentication failed.");
+
+        var passwordVerificationResult = _passwordHasher.VerifyHashedPassword(user, user.PasswordHash!, request.CurrentPassword);
+        if (passwordVerificationResult == PasswordVerificationResult.Failed)
+            throw new InvalidCredentialsException("Current password is incorrect.");
+
+        user.PasswordHash = _passwordHasher.HashPassword(user, request.NewPassword);
+        _unitOfWork.Users.Update(user);
+        await _unitOfWork.SaveChangesAsync();
+
+        return new ChangePasswordResponseDto();
     }
 
     public async Task<ResetPasswordResponseDto> ResetPasswordAsync(ResetPasswordRequestDto request)
