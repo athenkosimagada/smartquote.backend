@@ -49,6 +49,9 @@ builder.Services.AddIdentityCore<User>(options =>
     options.Password.RequireDigit = true;
     options.Password.RequireNonAlphanumeric = false;
     options.Password.RequireUppercase = false;
+    options.Password.RequiredLength = 8;
+
+    options.Tokens.EmailConfirmationTokenProvider = TokenOptions.DefaultEmailProvider;
 })
 .AddRoles<IdentityRole>()
 .AddEntityFrameworkStores<SmartQuoteDbContext>()
