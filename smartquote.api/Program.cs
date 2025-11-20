@@ -22,6 +22,16 @@ builder.WebHost.UseUrls($"http://*:{port}");
 
 builder.Configuration.AddEnvironmentVariables();
 
+builder.Services.AddCors(options => 
+{ 
+    options.AddDefaultPolicy(builder => 
+    {
+        builder.AllowAnyOrigin()
+               .AllowAnyMethod()
+               .AllowAnyHeader();
+    });
+});
+
 builder.Services.AddHealthChecks();
 
 // Add services to the container.
