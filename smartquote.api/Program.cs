@@ -22,16 +22,6 @@ builder.WebHost.UseUrls($"http://*:{port}");
 
 builder.Configuration.AddEnvironmentVariables();
 
-builder.Services.AddCors(options => 
-{ 
-    options.AddDefaultPolicy(builder => 
-    {
-        builder.AllowAnyOrigin()
-               .AllowAnyMethod()
-               .AllowAnyHeader();
-    });
-});
-
 builder.Services.AddHealthChecks();
 
 // Add services to the container.
@@ -120,6 +110,19 @@ builder.Services.AddAuthentication(JwtBearerDefaults.AuthenticationScheme)
     });
 builder.Services.AddAuthorization();
 
+builder.Services.AddCors(options =>
+{
+    // Allow React App to access the API
+    options.AddPolicy("reactApp", policyBuilder =>
+    {
+        policyBuilder
+            .WithOrigins(builder.Configuration.GetValue<string>("ReactAppUrl") ?? "http://localhost:5173")
+            .AllowAnyHeader()
+            .AllowAnyMethod()
+            .AllowCredentials();
+    });
+});
+
 var app = builder.Build();
 
 // Configure the HTTP request pipeline.
@@ -140,6 +143,8 @@ app.UseAuthentication();
 app.UseAuthorization();
 
 app.MapControllers();
+
+app.UseCors("reactApp");
 
 app.MapGet("/", () => Results.Ok("Hello World"));
 
