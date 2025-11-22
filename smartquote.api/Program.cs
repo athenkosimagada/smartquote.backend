@@ -46,6 +46,7 @@ builder.Services.AddScoped<IPasswordHasher<User>, PasswordHasher<User>>();
 builder.Services.AddIdentityCore<User>(options =>
 {
     options.User.RequireUniqueEmail = true;
+
     options.Password.RequireDigit = true;
     options.Password.RequireNonAlphanumeric = false;
     options.Password.RequireUppercase = false;
@@ -56,6 +57,11 @@ builder.Services.AddIdentityCore<User>(options =>
 .AddRoles<IdentityRole>()
 .AddEntityFrameworkStores<SmartQuoteDbContext>()
 .AddDefaultTokenProviders();
+
+builder.Services.Configure<DataProtectionTokenProviderOptions>(options =>
+{
+    options.TokenLifespan = TimeSpan.FromMinutes(5);
+});
 
 builder.Services.AddRouting();
 
