@@ -89,11 +89,15 @@ public class AccountService : IAccountService
 
         var code = await _userManager.GenerateEmailConfirmationTokenAsync(user);
 
-        var body = $"<html>" +
+        var body =
+            $"<html>" +
             $"<body>" +
             $"<p>Dear {user.FirstName},</p>" +
             $"<p>Thank you for registering with us. Please use the confirmation code below to verify your email address:</p>" +
             $"<h2>{code}</h2>" +
+            $"<p>This code will expire in 5 minutes.</p>" +
+            $"<p>If you received this email by mistake, you can safely ignore it.</p>" +
+            $"<p>Kind regards,<br/>SmartQuote Team</p>" +
             $"</body></html>";
 
         await _emailService.SendEmailAsync(user.Email!, "Email Confirmation", body);
