@@ -22,6 +22,7 @@ public class AccountService : IAccountService
     private readonly IEmailService _emailService;
     private readonly IMapper _mapper;
     private readonly JwtOptions _jwtSettings;
+    private readonly IConfiguration _configuration;
 
     private readonly UserManager<User> _userManager;
 
@@ -32,7 +33,8 @@ public class AccountService : IAccountService
         IEmailService emailService,
         IMapper mapper,
         UserManager<User> userManager,
-        IOptions<JwtOptions> jwtSettings)
+        IOptions<JwtOptions> jwtSettings,
+        IConfiguration configuration)
     {
         _unitOfWork = unitOfWork;
         _passwordHasher = passwordHasher;
@@ -41,32 +43,92 @@ public class AccountService : IAccountService
         _mapper = mapper;
         _userManager = userManager;
         _jwtSettings = jwtSettings.Value;
+        _configuration = configuration;
     }
     public async Task<RegisterResponseDto> RegisterAsync(RegisterRequestDto request)
     {
-        var existingUser = await _unitOfWork.Users.GetByEmailAsync(request.Email);
-        if (existingUser != null) throw new AlreadyExistException("Email already in use.");
+        var normalizedEmail = request.Email.Trim().ToLowerInvariant();
+        var existingUser = await _unitOfWork.Users.GetByEmailAsync(normalizedEmail);
+
+        if (existingUser != null)
+        {
+            return new RegisterResponseDto
+            {
+                Success = true,
+                Message = "We have received your registration request. If this email can be used, you will receive a confirmation shortly."
+            };
+        }
 
         var user = _mapper.Map<User>(request);
+        user.Email = normalizedEmail;
+        user.UserName = normalizedEmail;
         user.PasswordHash = _passwordHasher.HashPassword(user, request.Password);
 
         await _unitOfWork.Users.AddAsync(user);
         await _unitOfWork.SaveChangesAsync();
 
-        return new RegisterResponseDto();
+        var token = await _userManager.GenerateEmailConfirmationTokenAsync(user);
+        var encodedToken = System.Web.HttpUtility.UrlEncode(token);
+
+        var frontendUrl = _configuration["FrontendUrl"] ?? "http://localhost:5173";
+        var confirmationLink = $"{frontendUrl}/auth/confirm-email?token={encodedToken}&email={normalizedEmail}";
+
+        var body = $@"
+        <html><body>
+        <p>Dear {user.FirstName},</p>
+        <p>Thank you for registering. Click the button below to confirm your email:</p>
+        <p><a href='{confirmationLink}' style='padding:10px 20px;background:#1d4ed8;color:white;text-decoration:none;border-radius:5px;'>Confirm Email</a></p>
+        <p>This link will expire in 5 minutes.</p>
+        <p>If you received this by mistake, you can ignore this email.</p>
+        <p>Kind regards,<br/>SmartQuote Team</p>
+        </body></html>";
+
+        await _emailService.SendEmailAsync(user.Email!, "Confirm Your Email", body);
+
+        return new RegisterResponseDto
+        {
+            Success = true,
+            Message = "We have received your registration request. You will receive a confirmation email shortly."
+        };
     }
-    
+
     public async Task<LoginResponseDto> LoginAsync(LoginRequestDto request)
     {
-        var user = await _unitOfWork.Users.GetByEmailAsync(request.Email);
-        if (user == null) throw new InvalidCredentialsException();
+        var normalizedEmail = request.Email.Trim().ToLowerInvariant();
+        var user = await _unitOfWork.Users.GetByEmailAsync(normalizedEmail);
 
-        if (!user.EmailConfirmed) throw new EmailNotConfirmedException("Email not confirmed.");
+        if (user == null ||
+            _passwordHasher.VerifyHashedPassword(user, user.PasswordHash!, request.Password)
+            == PasswordVerificationResult.Failed)
+        {
+            throw new InvalidCredentialsException("Invalid email or password");
+        }
 
-        var passwordVerificationResult = _passwordHasher.VerifyHashedPassword(user, user.PasswordHash!, request.Password);
+        if (!user.EmailConfirmed)
+        {
+            var token = await _userManager.GenerateEmailConfirmationTokenAsync(user);
+            var encodedToken = System.Web.HttpUtility.UrlEncode(token);
+            var frontendUrl = _configuration["FrontendUrl"] ?? "http://localhost:5173";
+            var confirmationLink = $"{frontendUrl}/auth/confirm-email?token={encodedToken}&email={normalizedEmail}";
 
-        if (passwordVerificationResult == PasswordVerificationResult.Failed)
-            throw new InvalidCredentialsException();
+            var body = $@"
+                <html><body>
+                <p>Dear {user.FirstName},</p>
+                <p>Your account needs email confirmation. Click the button below to confirm it:</p>
+                <p><a href='{confirmationLink}' style='padding:10px 20px;background:#1d4ed8;color:white;text-decoration:none;border-radius:5px;'>Confirm Email</a></p>
+                <p>This link will expire in 5 minutes.</p>
+                <p>If you received this email by mistake, you can ignore it.</p>
+                <p>Kind regards,<br/>SmartQuote Team</p>
+                </body></html>";
+
+            await _emailService.SendEmailAsync(user.Email!, "Confirm Your Email", body);
+
+            return new LoginResponseDto
+            {
+                Success = false,
+                Message = "Your account is not confirmed. A confirmation email has been sent to you."
+            };
+        }
 
         var acessToken = _jwtService.GenerateAccessToken(user);
         var refreshToken = _jwtService.GenerateRefreshToken();
@@ -82,68 +144,116 @@ public class AccountService : IAccountService
 
     public async Task<ResendConfirmationEmailResponseDto> ResendConfirmationEmailAsync(ResendConfirmationEmailRequestDto request)
     {
-        var user = await _unitOfWork.Users.GetByEmailAsync(request.Email);
-        if (user == null) throw new NotFoundException("User with this email not found.");
+        var normalizedEmail = request.Email.Trim().ToLowerInvariant();
+        var user = await _unitOfWork.Users.GetByEmailAsync(normalizedEmail);
 
-        if(user.EmailConfirmed) throw new BadRequestException("Email is already confirmed.");
+        if (user == null || user.EmailConfirmed)
+        {
+            return new ResendConfirmationEmailResponseDto
+            {
+                Success = true,
+                Message = "You will receive a confirmation email if this email address belongs to an account."
+            };
+        }
 
-        var code = await _userManager.GenerateEmailConfirmationTokenAsync(user);
+        var token = await _userManager.GenerateEmailConfirmationTokenAsync(user);
+        var encodedToken = System.Web.HttpUtility.UrlEncode(token);
+        var frontendUrl = _configuration["FrontendUrl"] ?? "http://localhost:5173";
+        var confirmationLink = $"{frontendUrl}/auth/confirm-email?token={encodedToken}&email={normalizedEmail}";
 
-        var body =
-            $"<html>" +
-            $"<body>" +
-            $"<p>Dear {user.FirstName},</p>" +
-            $"<p>Thank you for registering with us. Please use the confirmation code below to verify your email address:</p>" +
-            $"<h2>{code}</h2>" +
-            $"<p>This code will expire in 5 minutes.</p>" +
-            $"<p>If you received this email by mistake, you can safely ignore it.</p>" +
-            $"<p>Kind regards,<br/>SmartQuote Team</p>" +
-            $"</body></html>";
+        var body = $@"
+        <html><body>
+        <p>Dear {user.FirstName},</p>
+        <p>Click the button below to confirm your email:</p>
+        <p><a href='{confirmationLink}' style='padding:10px 20px;background:#1d4ed8;color:white;text-decoration:none;border-radius:5px;'>Confirm Email</a></p>
+        <p>This link will expire in 5 minutes.</p>
+        <p>If you received this email by mistake, you can ignore it.</p>
+        <p>Kind regards,<br/>SmartQuote Team</p>
+        </body></html>";
 
-        await _emailService.SendEmailAsync(user.Email!, "Email Confirmation", body);
-        return new ResendConfirmationEmailResponseDto();
+        await _emailService.SendEmailAsync(user.Email!, "Confirm Your Email", body);
+
+        return new ResendConfirmationEmailResponseDto
+        {
+            Success = true,
+            Message = "You will receive a confirmation email if this email address belongs to an account."
+        };
     }
 
     public async Task<ConfirmEmailResponseDto> ConfirmEmailAsync(ConfirmEmailRequestDto request)
     {
-        var user = await _unitOfWork.Users.GetByEmailAsync(request.Email);
-        if (user == null) throw new NotFoundException("User with this email not found.");
+        var normalizedEmail = request.Email.Trim().ToLowerInvariant();
+        var user = await _unitOfWork.Users.GetByEmailAsync(normalizedEmail);
 
-        if (user.EmailConfirmed) throw new BadRequestException("Email is already confirmed.");
+        if (user == null || user.EmailConfirmed)
+        {
+            return new ConfirmEmailResponseDto
+            {
+                Success = true,
+                Message = "If this is your account, your email is now confirmed. Thank you!"
+            };
+        }
 
         var result = await _userManager.ConfirmEmailAsync(user, request.Code);
         if (!result.Succeeded)
         {
-            throw new BadRequestException("Confirmation email failed.");
+            return new ConfirmEmailResponseDto
+            {
+                Success = false,
+                Message = "Your confirmation link is invalid or has expired. Please request a new confirmation email."
+            };
         }
 
-        return new ConfirmEmailResponseDto();
+        return new ConfirmEmailResponseDto
+        {
+            Success = true,
+            Message = "Your email has been successfully confirmed. Welcome aboard!"
+        };
     }
 
     public async Task<ForgotPasswordResponseDto> ForgotPasswordAsync(ForgotPasswordRequestDto request)
     {
-        var user = await _unitOfWork.Users.GetByEmailAsync(request.Email);
-        if (user == null) throw new NotFoundException("User with this email not found.");
+        var normalizedEmail = request.Email.Trim().ToLowerInvariant();
+        var user = await _unitOfWork.Users.GetByEmailAsync(normalizedEmail);
 
-        if (!user.EmailConfirmed) throw new BadRequestException("Email is not confirmed. Please confirm your email before resetting password.");
+        if (user == null || !user.EmailConfirmed)
+        {
+            return new ForgotPasswordResponseDto
+            {
+                Success = true,
+                Message = "If this email is associated with an account, you will receive a password reset link shortly."
+            };
+        }
 
-        var code = await _userManager.GeneratePasswordResetTokenAsync(user);
+        var token = await _userManager.GeneratePasswordResetTokenAsync(user);
+        var encodedToken = System.Web.HttpUtility.UrlEncode(token);
+        var frontendUrl = _configuration["FrontendUrl"] ?? "http://localhost:5173";
+        var resetLink = $"{frontendUrl}/auth/reset-password?token={encodedToken}&email={normalizedEmail}";
 
-        var body = $"<html>" +
-            $"<body>" +
-            $"<p>Dear {user.FirstName},</p>" +
-            $"<p>You requested to reset your password. Please use the code below to reset it:</p>" +
-            $"<h2>{code}</h2>" +
-            $"</body></html>";
+        var body = $@"
+            <html><body>
+            <p>Dear {user.FirstName},</p>
+            <p>You requested to reset your password. Click the button below to reset it:</p>
+            <p><a href='{resetLink}' style='padding:10px 20px;background:#1d4ed8;color:white;text-decoration:none;border-radius:5px;'>Reset Password</a></p>
+            <p>This link will expire in 5 minutes.</p>
+            <p>If you received this email by mistake, you can safely ignore it.</p>
+            <p>Kind regards,<br/>SmartQuote Team</p>
+            </body></html>";
 
-        await _emailService.SendEmailAsync(user.Email!, "Password Reset", body);
+        await _emailService.SendEmailAsync(user.Email!, "Password Reset Request", body);
 
-        return new ForgotPasswordResponseDto();
+        return new ForgotPasswordResponseDto
+        {
+            Success = true,
+            Message = "If this email is associated with an account, you will receive a password reset link shortly."
+        };
     }
 
     public async Task<ChangePasswordResponseDto> ChangePasswordAsync(string userEmail, ChangePasswordRequestDto request)
     {
-        var user = await _unitOfWork.Users.GetByEmailAsync(userEmail);
+        var normalizedEmail = userEmail.Trim().ToLowerInvariant();
+        var user = await _unitOfWork.Users.GetByEmailAsync(normalizedEmail);
+
         if (user == null) throw new AuthenticationException("Authentication failed.");
 
         var passwordVerificationResult = _passwordHasher.VerifyHashedPassword(user, user.PasswordHash!, request.CurrentPassword);
@@ -159,45 +269,38 @@ public class AccountService : IAccountService
 
     public async Task<ResetPasswordResponseDto> ResetPasswordAsync(ResetPasswordRequestDto request)
     {
-        var user = await _unitOfWork.Users.GetByEmailAsync(request.Email);
-        if (user == null) throw new NotFoundException("User with this email not found.");
+        var normalizedEmail = request.Email.Trim().ToLowerInvariant();
+        var user = await _unitOfWork.Users.GetByEmailAsync(normalizedEmail);
+
+        if (user == null)
+        {
+            return new ResetPasswordResponseDto
+            {
+                Success = true,
+                Message = "If this email is associated with an account, your password has been reset successfully."
+            };
+        }
 
         var result = await _userManager.ResetPasswordAsync(user, request.Code, request.NewPassword);
         if (!result.Succeeded)
-        {
-            throw new BadRequestException("Password reset failed");
-        }
+            throw new BadRequestException("Password reset failed.");
 
         return new ResetPasswordResponseDto();
     }
 
     public async Task<RefreshTokenResponseDto> RefreshTokenAsync(RefreshTokenRequestDto request)
     {
-        ClaimsPrincipal principal = _jwtService.GetPrincipalFromExpiredToken(request.AccessToken);
-
+        var principal = _jwtService.GetPrincipalFromExpiredToken(request.AccessToken);
         if (principal == null)
-        {
             throw new AuthenticationException("Authentication failed.");
-        }
 
-        string userEmail = principal.FindFirstValue(ClaimTypes.Email)!;
-
+        var userEmail = principal.FindFirstValue(ClaimTypes.Email)?.Trim().ToLowerInvariant();
         if (string.IsNullOrWhiteSpace(userEmail))
-        {
             throw new AuthenticationException("Authentication failed.");
-        }
 
         var user = await _unitOfWork.Users.GetByEmailAsync(userEmail);
-
-        if (user == null)
-        {
+        if (user == null || user.RefreshToken != request.RefreshToken || user.RefreshTokenExpiryTime <= DateTime.UtcNow)
             throw new AuthenticationException("Authentication failed.");
-        }
-
-        if (user.RefreshToken != request.RefreshToken || user.RefreshTokenExpiryTime <= DateTime.UtcNow)
-        {
-            throw new AuthenticationException("Authentication failed.");
-        }
 
         var newAccessToken = _jwtService.GenerateAccessToken(user);
         var newRefreshToken = _jwtService.GenerateRefreshToken();
@@ -217,8 +320,10 @@ public class AccountService : IAccountService
 
     public async Task<AccountInfoResponseDto> GetAccountDetailsAsync(string email)
     {
-        var user = await _unitOfWork.Users.GetByEmailAsync(email);
+        var normalizedEmail = email.Trim().ToLowerInvariant();
+        var user = await _unitOfWork.Users.GetByEmailAsync(normalizedEmail);
         if (user == null) throw new NotFoundException("User not found.");
+
         var accountDetails = _mapper.Map<AccountDetailsDto>(user);
         return new AccountInfoResponseDto
         {
@@ -228,14 +333,15 @@ public class AccountService : IAccountService
 
     public async Task<LogoutResponseDto> LogoutAsync(LogoutRequestDto request)
     {
-        var user = await _unitOfWork.Users.GetByEmailAsync(request.Email);
+        var normalizedEmail = request.Email.Trim().ToLowerInvariant();
+        var user = await _unitOfWork.Users.GetByEmailAsync(normalizedEmail);
 
-        if (user == null) return new LogoutResponseDto();
-
-        user.RefreshToken = string.Empty;
-        user.RefreshTokenExpiryTime = DateTime.UtcNow;
-
-        await _unitOfWork.SaveChangesAsync();
+        if (user != null)
+        {
+            user.RefreshToken = string.Empty;
+            user.RefreshTokenExpiryTime = DateTime.UtcNow;
+            await _unitOfWork.SaveChangesAsync();
+        }
 
         return new LogoutResponseDto();
     }
