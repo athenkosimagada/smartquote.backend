@@ -164,10 +164,10 @@ public class AccountService : IAccountService
         var body = $@"
         <html><body>
         <p>Dear {user.FirstName},</p>
-        <p>Click the button below to confirm your email:</p>
+        <p>Thank you for registering. Click the button below to confirm your email:</p>
         <p><a href='{confirmationLink}' style='padding:10px 20px;background:#1d4ed8;color:white;text-decoration:none;border-radius:5px;'>Confirm Email</a></p>
         <p>This link will expire in 5 minutes.</p>
-        <p>If you received this email by mistake, you can ignore it.</p>
+        <p>If you received this by mistake, you can ignore this email.</p>
         <p>Kind regards,<br/>SmartQuote Team</p>
         </body></html>";
 
