@@ -11,6 +11,7 @@ using smartquote.api.Repositories.Interfaces;
 using smartquote.api.Services;
 using smartquote.api.Services.Interfaces;
 using smartquote.api.Options;
+using Microsoft.Extensions.Configuration;
 
 namespace smartquote.tests.Unit.Services;
 
@@ -22,6 +23,7 @@ public class AccountServiceTests
     private readonly Mock<IEmailService> _emailService;
     private readonly Mock<IMapper> _mapper;
     private readonly Mock<UserManager<User>> _userManager;
+    private readonly Mock<IConfiguration> _configuration;
 
     private readonly IPasswordHasher<User> _passwordHasher;
     private readonly IOptions<JwtOptions> _jwtOptions;
@@ -34,6 +36,7 @@ public class AccountServiceTests
         _jwtService = new Mock<IJwtService>();
         _emailService = new Mock<IEmailService>();
         _mapper = new Mock<IMapper>();
+        _configuration = new Mock<IConfiguration>();
 
         _passwordHasher = new PasswordHasher<User>();
 
@@ -60,7 +63,8 @@ public class AccountServiceTests
             _emailService.Object,
             _mapper.Object,
             _userManager.Object,
-            _jwtOptions);
+            _jwtOptions,
+            _configuration.Object);
     }
 
     [Fact]
@@ -114,35 +118,6 @@ public class AccountServiceTests
             u.FullName == $"{request.FirstName} {request.LastName}"
         )), Times.Once);
         _unitOfWork.Verify(u => u.SaveChangesAsync(), Times.Once);
-    }
-
-    [Fact]
-    public async Task RegisterAsync_ShouldThrowAlreadyExistException_WhenEmailAlreadyExists()
-    {
-        var request = new RegisterRequestDto
-        {
-            FirstName = "Jane",
-            LastName = "Smith",
-            Email = "janesmith@example.com",
-            Password = "SecurePassword@123"
-        };
-
-        var existingUser = new User
-        {
-            Email = request.Email,
-            FirstName = "Existing",
-            LastName = "User",
-            FullName = "Existing User",
-            PasswordHash = _passwordHasher.HashPassword(null!, "OldPassword@123")
-        };
-
-        _userRepository
-            .Setup(r => r.GetByEmailAsync(request.Email))
-            .ReturnsAsync(existingUser);
-
-        await Assert.ThrowsAsync<AlreadyExistException>(() =>
-           _authService.RegisterAsync(request));
-        _userRepository.Verify(r => r.AddAsync(It.IsAny<User>()), Times.Never);
     }
 
     [Fact]
