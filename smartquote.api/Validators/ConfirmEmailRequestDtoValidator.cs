@@ -13,7 +13,7 @@ public class ConfirmEmailRequestDtoValidator : AbstractValidator<ConfirmEmailReq
             .NotEmpty().NotNull().WithMessage("Email is required.")
             .EmailAddress().WithMessage("Invalid email format.");
 
-        RuleFor(x => x.Code)
+        RuleFor(x => x.Token)
             .NotEmpty().NotNull().WithMessage("Confirmation code is required.")
             .Matches("^[0-9]+$").WithMessage("Confirmation code must contain numbers only.");
     }

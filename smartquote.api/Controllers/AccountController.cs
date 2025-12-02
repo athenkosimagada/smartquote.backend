@@ -145,7 +145,7 @@ public class AccountController : ControllerBase
     {
         var userEmail = User.FindFirst(ClaimTypes.Name)?.Value;
 
-        var response = await _accountService.GetAccountDetailsAsync(userEmail);
+        var response = await _accountService.GetAccountDetailsAsync(userEmail!);
         return Ok(response);
     }
 
