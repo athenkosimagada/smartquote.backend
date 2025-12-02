@@ -55,7 +55,7 @@ public class AccountService : IAccountService
             return new RegisterResponseDto
             {
                 Success = true,
-                Message = "We have received your registration request. If this email can be used, you will receive a confirmation shortly."
+                Message = "If this email can be used, you’ll receive an email with next steps shortly."
             };
         }
 
@@ -76,11 +76,9 @@ public class AccountService : IAccountService
         var body = $@"
         <html><body>
         <p>Dear {user.FirstName},</p>
-        <p>Thank you for registering. Click the button below to confirm your email:</p>
+        <p>Please confirm your email to activate your account:</p>
         <p><a href='{confirmationLink}' style='padding:10px 20px;background:#1d4ed8;color:white;text-decoration:none;border-radius:5px;'>Confirm Email</a></p>
         <p>This link will expire in 5 minutes.</p>
-        <p>If you received this by mistake, you can ignore this email.</p>
-        <p>Kind regards,<br/>SmartQuote Team</p>
         </body></html>";
 
         await _emailService.SendEmailAsync(user.Email!, "Confirm Your Email", body);
@@ -88,7 +86,7 @@ public class AccountService : IAccountService
         return new RegisterResponseDto
         {
             Success = true,
-            Message = "We have received your registration request. You will receive a confirmation email shortly."
+            Message = "Registration successful. Please check your email to confirm your account."
         };
     }
 
@@ -101,7 +99,9 @@ public class AccountService : IAccountService
             _passwordHasher.VerifyHashedPassword(user, user.PasswordHash!, request.Password)
             == PasswordVerificationResult.Failed)
         {
-            throw new InvalidCredentialsException("Invalid email or password");
+            throw new InvalidCredentialsException(
+               "Invalid login attempt. Please check your email and password."
+            );
         }
 
         if (!user.EmailConfirmed)
@@ -111,27 +111,27 @@ public class AccountService : IAccountService
             var frontendUrl = _configuration["FrontendUrl"] ?? "http://localhost:5173";
             var confirmationLink = $"{frontendUrl}/auth/confirm-email?token={encodedToken}&email={normalizedEmail}";
 
-            var body = $@"
-                <html><body>
-                <p>Dear {user.FirstName},</p>
-                <p>Your account needs email confirmation. Click the button below to confirm it:</p>
-                <p><a href='{confirmationLink}' style='padding:10px 20px;background:#1d4ed8;color:white;text-decoration:none;border-radius:5px;'>Confirm Email</a></p>
-                <p>This link will expire in 5 minutes.</p>
-                <p>If you received this email by mistake, you can ignore it.</p>
-                <p>Kind regards,<br/>SmartQuote Team</p>
-                </body></html>";
+            var body = $@"<html><body>
+            <p>Dear {user.FirstName},</p>
+            <p>Please confirm your email to continue:</p>
+            <p><a href='{confirmationLink}' style='padding:10px 20px;background:#1d4ed8;color:white;text-decoration:none;border-radius:5px;'>Confirm Email</a></p>
+            </body></html>";
 
             await _emailService.SendEmailAsync(user.Email!, "Confirm Your Email", body);
 
             return new LoginResponseDto
             {
                 Success = false,
-                Message = "Your account is not confirmed. A confirmation email has been sent to you."
+                Message = "Please confirm your email. A new confirmation message has been sent."
             };
         }
 
         var acessToken = _jwtService.GenerateAccessToken(user);
         var refreshToken = _jwtService.GenerateRefreshToken();
+
+        user.RefreshToken = refreshToken;
+        user.RefreshTokenExpiryTime = DateTime.UtcNow.AddDays(7);
+        await _unitOfWork.SaveChangesAsync();
 
         return new LoginResponseDto
         {
@@ -152,7 +152,7 @@ public class AccountService : IAccountService
             return new ResendConfirmationEmailResponseDto
             {
                 Success = true,
-                Message = "You will receive a confirmation email if this email address belongs to an account."
+                Message = "If this email is linked to an account, a confirmation message has been sent."
             };
         }
 
@@ -161,14 +161,10 @@ public class AccountService : IAccountService
         var frontendUrl = _configuration["FrontendUrl"] ?? "http://localhost:5173";
         var confirmationLink = $"{frontendUrl}/auth/confirm-email?token={encodedToken}&email={normalizedEmail}";
 
-        var body = $@"
-        <html><body>
+        var body = $@"<html><body>
         <p>Dear {user.FirstName},</p>
-        <p>Thank you for registering. Click the button below to confirm your email:</p>
-        <p><a href='{confirmationLink}' style='padding:10px 20px;background:#1d4ed8;color:white;text-decoration:none;border-radius:5px;'>Confirm Email</a></p>
-        <p>This link will expire in 5 minutes.</p>
-        <p>If you received this by mistake, you can ignore this email.</p>
-        <p>Kind regards,<br/>SmartQuote Team</p>
+        <p>Please confirm your email:</p>
+        <p><a href='{confirmationLink}' style='padding:10px 20px;background:#1d4ed8;color:white;'>Confirm Email</a></p>
         </body></html>";
 
         await _emailService.SendEmailAsync(user.Email!, "Confirm Your Email", body);
@@ -176,7 +172,7 @@ public class AccountService : IAccountService
         return new ResendConfirmationEmailResponseDto
         {
             Success = true,
-            Message = "You will receive a confirmation email if this email address belongs to an account."
+            Message = "If this email exists, a confirmation message has been sent."
         };
     }
 
@@ -190,7 +186,7 @@ public class AccountService : IAccountService
             return new ConfirmEmailResponseDto
             {
                 Success = true,
-                Message = "If this is your account, your email is now confirmed. Thank you!"
+                Message = "Your email has been confirmed. You're all set!"
             };
         }
 
@@ -200,14 +196,14 @@ public class AccountService : IAccountService
             return new ConfirmEmailResponseDto
             {
                 Success = false,
-                Message = "Your confirmation link is invalid or has expired. Please request a new confirmation email."
+                Message = "Your confirmation link is invalid or expired. Please request a new link."
             };
         }
 
         return new ConfirmEmailResponseDto
         {
             Success = true,
-            Message = "Your email has been successfully confirmed. Welcome aboard!"
+            Message = "Your email has been confirmed. You're all set!"
         };
     }
 
@@ -221,7 +217,7 @@ public class AccountService : IAccountService
             return new ForgotPasswordResponseDto
             {
                 Success = true,
-                Message = "If this email is associated with an account, you will receive a password reset link shortly."
+                Message = "If this email is associated with an account, a reset link will be sent shortly."
             };
         }
 
@@ -230,22 +226,20 @@ public class AccountService : IAccountService
         var frontendUrl = _configuration["FrontendUrl"] ?? "http://localhost:5173";
         var resetLink = $"{frontendUrl}/auth/reset-password?token={encodedToken}&email={normalizedEmail}";
 
-        var body = $@"
-            <html><body>
-            <p>Dear {user.FirstName},</p>
-            <p>You requested to reset your password. Click the button below to reset it:</p>
-            <p><a href='{resetLink}' style='padding:10px 20px;background:#1d4ed8;color:white;text-decoration:none;border-radius:5px;'>Reset Password</a></p>
-            <p>This link will expire in 5 minutes.</p>
-            <p>If you received this email by mistake, you can safely ignore it.</p>
-            <p>Kind regards,<br/>SmartQuote Team</p>
-            </body></html>";
-
-        await _emailService.SendEmailAsync(user.Email!, "Password Reset Request", body);
+        await _emailService.SendEmailAsync(
+            user.Email!,
+            "Password Reset Request",
+            $@"<html><body>
+            <p>Hello {user.FirstName},</p>
+            <p>Click below to reset your password:</p>
+            <a href='{resetLink}'>Reset Password</a>
+            </body></html>"
+        );
 
         return new ForgotPasswordResponseDto
         {
             Success = true,
-            Message = "If this email is associated with an account, you will receive a password reset link shortly."
+            Message = "If this email is associated with an account, a reset link will be sent shortly."
         };
     }
 
@@ -254,7 +248,8 @@ public class AccountService : IAccountService
         var normalizedEmail = userEmail.Trim().ToLowerInvariant();
         var user = await _unitOfWork.Users.GetByEmailAsync(normalizedEmail);
 
-        if (user == null) throw new AuthenticationException("Authentication failed.");
+        if (user == null)
+            throw new AuthenticationException("Authentication failed.");
 
         var passwordVerificationResult = _passwordHasher.VerifyHashedPassword(user, user.PasswordHash!, request.CurrentPassword);
         if (passwordVerificationResult == PasswordVerificationResult.Failed)
@@ -277,7 +272,7 @@ public class AccountService : IAccountService
             return new ResetPasswordResponseDto
             {
                 Success = true,
-                Message = "If this email is associated with an account, your password has been reset successfully."
+                Message = "Your password has been reset successfully."
             };
         }
 

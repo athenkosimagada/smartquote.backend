@@ -143,27 +143,7 @@ public class AccountController : ControllerBase
     [Authorize]
     public async Task<ActionResult<AccountInfoResponseDto>> GetUserInfor()
     {
-        var accessToken = Request.Headers["Authorization"].ToString().Replace("Bearer ", "");
-
-        if (string.IsNullOrEmpty(accessToken))
-        {
-            return Unauthorized(new
-            {
-                Success = false,
-                Message = "Unauthorized"
-            });
-        }
-
         var userEmail = User.FindFirst(ClaimTypes.Name)?.Value;
-
-        if (string.IsNullOrEmpty(userEmail))
-        {
-            return Unauthorized(new
-            {
-                Success = false,
-                Message = "Unauthorized"
-            });
-        }
 
         var response = await _accountService.GetAccountDetailsAsync(userEmail);
         return Ok(response);
