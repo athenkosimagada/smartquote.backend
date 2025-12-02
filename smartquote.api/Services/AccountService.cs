@@ -276,7 +276,7 @@ public class AccountService : IAccountService
             };
         }
 
-        var result = await _userManager.ResetPasswordAsync(user, request.Code, request.NewPassword);
+        var result = await _userManager.ResetPasswordAsync(user, System.Web.HttpUtility.UrlDecode(request.Token), request.NewPassword);
         if (!result.Succeeded)
             throw new BadRequestException("Password reset failed.");
 
