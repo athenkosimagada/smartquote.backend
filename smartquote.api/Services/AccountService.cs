@@ -190,7 +190,7 @@ public class AccountService : IAccountService
             };
         }
 
-        var result = await _userManager.ConfirmEmailAsync(user, request.Code);
+        var result = await _userManager.ConfirmEmailAsync(user, System.Web.HttpUtility.UrlDecode(request.Token));
         if (!result.Succeeded)
         {
             return new ConfirmEmailResponseDto
