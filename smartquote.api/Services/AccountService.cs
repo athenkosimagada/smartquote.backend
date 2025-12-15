@@ -100,11 +100,7 @@ public class AccountService : IAccountService
 
         if (user == null)
         {
-            _passwordHasher.VerifyHashedPassword(
-                new User(),
-                "$2a$11$invalidinvalidinvalidinvalidinvalidinv",
-                request.Password
-            );
+            await Task.Delay(1000);
 
             throw new InvalidCredentialsException(
                "Invalid login attempt. Please check your email and password."

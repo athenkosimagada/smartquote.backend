@@ -68,58 +68,61 @@ public class AccountServiceTests
             _configuration.Object);
     }
 
-    //[Fact]
-    //public async Task RegisterAsync_ShouldCreateNewUserWithHashedPassword_WhenEmailIsNotInUse()
-    //{
-    //    var request = new RegisterRequestDto
-    //    {
-    //        FirstName = "Jane",
-    //        LastName = "Smith",
-    //        Email = "janesmith@example.com",
-    //        Password = "SecurePassword@123"
-    //    };
+    [Fact]
+    public async Task RegisterAsync_ShouldCreateNewUserWithHashedPassword_WhenEmailIsNotInUse()
+    {
+        var request = new RegisterRequestDto
+        {
+            FirstName = "Jane",
+            LastName = "Smith",
+            Email = "janesmith@example.com",
+            Password = "SecurePassword@123"
+        };
 
-    //    _mapper
-    //        .Setup(m => m.Map<User>(It.IsAny<RegisterRequestDto>()))
-    //        .Returns(new User
-    //        {
-    //            FirstName = request.FirstName,
-    //            LastName = request.LastName,
-    //            Email = request.Email,
-    //            FullName = $"{request.FirstName} {request.LastName}"
-    //        });
+        _mapper
+            .Setup(m => m.Map<User>(It.IsAny<RegisterRequestDto>()))
+            .Returns(new User
+            {
+                FirstName = request.FirstName,
+                LastName = request.LastName,
+                Email = request.Email,
+                FullName = $"{request.FirstName} {request.LastName}"
+            });
 
-    //    _userRepository
-    //        .Setup(r => r.GetByEmailAsync(request.Email))
-    //        .ReturnsAsync((User)null!);
+        _userRepository
+            .Setup(r => r.GetByEmailAsync(request.Email))
+            .ReturnsAsync((User)null!);
 
-    //    User capturedUser = null!;
-    //    _userRepository
-    //        .Setup(r => r.AddAsync(It.IsAny<User>()))
-    //        .Callback<User>(u => capturedUser = u)
-    //        .Returns(Task.CompletedTask);
+        User capturedUser = null!;
+        _userRepository
+            .Setup(r => r.AddAsync(It.IsAny<User>()))
+            .Callback<User>(u => capturedUser = u)
+            .Returns(Task.CompletedTask);
+        _userManager
+        .Setup(u => u.GenerateEmailConfirmationTokenAsync(It.IsAny<User>()))
+        .ReturnsAsync("fake-email-confirmation-token");
 
-    //    var result = await _authService.RegisterAsync(request);
+        var result = await _authService.RegisterAsync(request);
 
-    //    Assert.NotNull(capturedUser);
-    //    Assert.NotEqual(request.Password, capturedUser.PasswordHash);
-    //    Assert.False(string.IsNullOrWhiteSpace(capturedUser.PasswordHash));
+        Assert.NotNull(capturedUser);
+        Assert.NotEqual(request.Password, capturedUser.PasswordHash);
+        Assert.False(string.IsNullOrWhiteSpace(capturedUser.PasswordHash));
 
-    //    result.Should().NotBeNull();
-    //    var verificationResult = _passwordHasher.VerifyHashedPassword(
-    //     capturedUser,
-    //     capturedUser.PasswordHash,
-    //     request.Password);
-    //    Assert.Equal(PasswordVerificationResult.Success, verificationResult);
+        result.Should().NotBeNull();
+        var verificationResult = _passwordHasher.VerifyHashedPassword(
+         capturedUser,
+         capturedUser.PasswordHash,
+         request.Password);
+        Assert.Equal(PasswordVerificationResult.Success, verificationResult);
 
-    //    _userRepository.Verify(r => r.AddAsync(It.Is<User>(u =>
-    //        u.Email == request.Email &&
-    //        u.FirstName == request.FirstName &&
-    //        u.LastName == request.LastName &&
-    //        u.FullName == $"{request.FirstName} {request.LastName}"
-    //    )), Times.Once);
-    //    _unitOfWork.Verify(u => u.SaveChangesAsync(), Times.Once);
-    //}
+        _userRepository.Verify(r => r.AddAsync(It.Is<User>(u =>
+            u.Email == request.Email &&
+            u.FirstName == request.FirstName &&
+            u.LastName == request.LastName &&
+            u.FullName == $"{request.FirstName} {request.LastName}"
+        )), Times.Once);
+        _unitOfWork.Verify(u => u.SaveChangesAsync(), Times.Once);
+    }
 
     [Fact]
     public async Task LoginAsync_ShouldReturnLoginResponse_WhenCredentialsAreValid()
@@ -159,26 +162,26 @@ public class AccountServiceTests
         result.AccessTokenExpiryTime.Should().BeAfter(DateTime.UtcNow);
     }
 
-    //[Fact]
-    //public async Task LoginAsync_ShouldThrowInvalidCredentialsException_WhenEmailDoesNotExist()
-    //{
-    //    var request = new LoginRequestDto
-    //    {
-    //        Email = "janesmith@example.com",
-    //        Password = "SecurePassword@123"
-    //    };
+    [Fact]
+    public async Task LoginAsync_ShouldThrowInvalidCredentialsException_WhenEmailDoesNotExist()
+    {
+        var request = new LoginRequestDto
+        {
+            Email = "janesmith@example.com",
+            Password = "SecurePassword@123"
+        };
 
-    //    _userRepository
-    //        .Setup(r => r.GetByEmailAsync(request.Email))
-    //        .ReturnsAsync((User)null!);
+        _userRepository
+            .Setup(r => r.GetByEmailAsync(request.Email))
+            .ReturnsAsync((User)null!);
 
-    //    await Assert.ThrowsAsync<InvalidCredentialsException>(() =>
-    //        _authService.LoginAsync(request));
+        await Assert.ThrowsAsync<InvalidCredentialsException>(() =>
+            _authService.LoginAsync(request));
 
-    //    _userRepository.Verify(r => r.GetByEmailAsync(request.Email), Times.Once);
-    //    _jwtService.Verify(j => j.GenerateAccessToken(It.IsAny<User>()), Times.Never);
-    //    _jwtService.Verify(j => j.GenerateRefreshToken(), Times.Never);
-    //}
+        _userRepository.Verify(r => r.GetByEmailAsync(request.Email), Times.Once);
+        _jwtService.Verify(j => j.GenerateAccessToken(It.IsAny<User>()), Times.Never);
+        _jwtService.Verify(j => j.GenerateRefreshToken(), Times.Never);
+    }
 
     [Fact]
     public async Task LoginAsync_ShouldThrowInvalidCredentialsException_WhenPasswordIsIncorrect()
