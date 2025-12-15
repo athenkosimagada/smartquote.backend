@@ -146,7 +146,7 @@ public class AccountServiceTests
 
         _jwtService
             .Setup(j => j.GenerateAccessToken(It.IsAny<User>()))
-            .Returns("access_token");
+            .Returns(("access_token", DateTime.UtcNow));
 
         _jwtService
             .Setup(j => j.GenerateRefreshToken())

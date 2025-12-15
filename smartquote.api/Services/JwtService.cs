@@ -19,10 +19,11 @@ public class JwtService : IJwtService
         _jwtSettings = jwtOptions.Value;
     }
 
-    public string GenerateAccessToken(User user)
+    public (string, DateTime) GenerateAccessToken(User user)
     {
         var tokenHandler = new JwtSecurityTokenHandler();
         var key = Encoding.UTF8.GetBytes(_jwtSettings.SecretKey);
+        var now = DateTime.UtcNow;
 
         var tokenDescriptor = new SecurityTokenDescriptor
         {
@@ -31,7 +32,8 @@ public class JwtService : IJwtService
                 new Claim(ClaimTypes.Name, user.Email!),
                 new Claim(ClaimTypes.NameIdentifier, user.Id),
             }),
-            Expires = DateTime.UtcNow.AddMinutes(_jwtSettings.AccessTokenExpirationMinutes),
+            NotBefore = now,
+            Expires = now.AddMinutes(_jwtSettings.AccessTokenExpirationMinutes),
             Issuer = _jwtSettings.Issuer,
             Audience = _jwtSettings.Audience,
             SigningCredentials = new SigningCredentials(
@@ -42,7 +44,7 @@ public class JwtService : IJwtService
 
         var token = tokenHandler.CreateToken(tokenDescriptor);
 
-        return tokenHandler.WriteToken(token);
+        return (tokenHandler.WriteToken(token), now);
     }
 
     public string GenerateRefreshToken()

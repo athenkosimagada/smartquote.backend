@@ -5,7 +5,7 @@ namespace smartquote.api.Services.Interfaces;
 
 public interface IJwtService
 {
-    string GenerateAccessToken(User user);
+    (string, DateTime) GenerateAccessToken(User user);
     string GenerateRefreshToken();
     ClaimsPrincipal GetPrincipalFromExpiredToken(string accessToken);
 }

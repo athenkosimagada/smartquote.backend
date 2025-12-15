@@ -141,11 +141,11 @@ public class AccountService : IAccountService
             };
         }
 
-        var acessToken = _jwtService.GenerateAccessToken(user);
+        var (acessToken, now) = _jwtService.GenerateAccessToken(user);
         var refreshToken = _jwtService.GenerateRefreshToken();
 
         user.RefreshToken = refreshToken;
-        user.RefreshTokenExpiryTime = DateTime.UtcNow.AddDays(_jwtSettings.RefreshTokenExpirationDays);
+        user.RefreshTokenExpiryTime = now.AddDays(_jwtSettings.RefreshTokenExpirationDays);
         await _unitOfWork.SaveChangesAsync();
 
         return new LoginInternalResult
@@ -154,7 +154,7 @@ public class AccountService : IAccountService
             AccessToken = acessToken,
             RefreshToken = refreshToken,
             RefreshTokenExpiryTime = user.RefreshTokenExpiryTime,
-            AccessTokenExpiryTime = DateTime.UtcNow.AddMinutes(_jwtSettings.AccessTokenExpirationMinutes),
+            AccessTokenExpiryTime = now.AddMinutes(_jwtSettings.AccessTokenExpirationMinutes),
         };
     }
 
@@ -332,11 +332,11 @@ public class AccountService : IAccountService
             throw new AuthenticationException("Authentication failed.");
         }
 
-        var newAccessToken = _jwtService.GenerateAccessToken(user);
+        var (newAccessToken, now) = _jwtService.GenerateAccessToken(user);
         var newRefreshToken = _jwtService.GenerateRefreshToken();
 
         user.RefreshToken = newRefreshToken;
-        user.RefreshTokenExpiryTime = DateTime.UtcNow.AddDays(_jwtSettings.RefreshTokenExpirationDays);
+        user.RefreshTokenExpiryTime = now.AddDays(_jwtSettings.RefreshTokenExpirationDays);
         await _unitOfWork.SaveChangesAsync();
 
         return new RefreshTokenInternalResuslt
@@ -345,7 +345,7 @@ public class AccountService : IAccountService
             AccessToken = newAccessToken,
             RefreshToken = newRefreshToken,
             RefreshTokenExpiryTime = user.RefreshTokenExpiryTime,
-            AccessTokenExpiryTime = DateTime.UtcNow.AddMinutes(_jwtSettings.AccessTokenExpirationMinutes),
+            AccessTokenExpiryTime = now.AddMinutes(_jwtSettings.AccessTokenExpirationMinutes),
         };
     }
 
