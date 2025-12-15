@@ -1,14 +1,14 @@
 ﻿using AutoMapper;
-using Microsoft.AspNetCore.Http.HttpResults;
 using Microsoft.AspNetCore.Identity;
 using Microsoft.Extensions.Options;
 using smartquote.api.DTOs.Account;
 using smartquote.api.DTOs.Account.Responses;
 using smartquote.api.Entities;
 using smartquote.api.Exceptions;
+using smartquote.api.Options;
 using smartquote.api.Repositories.Interfaces;
 using smartquote.api.Services.Interfaces;
-using smartquote.api.Options;
+using smartquote.api.Services.Models;
 using System.Security.Authentication;
 using System.Security.Claims;
 
@@ -45,6 +45,7 @@ public class AccountService : IAccountService
         _jwtSettings = jwtSettings.Value;
         _configuration = configuration;
     }
+
     public async Task<RegisterResponseDto> RegisterAsync(RegisterRequestDto request)
     {
         var normalizedEmail = request.Email.Trim().ToLowerInvariant();
@@ -68,7 +69,9 @@ public class AccountService : IAccountService
         await _unitOfWork.SaveChangesAsync();
 
         var token = await _userManager.GenerateEmailConfirmationTokenAsync(user);
-        var encodedToken = System.Web.HttpUtility.UrlEncode(token);
+        var encodedToken = Microsoft.AspNetCore.WebUtilities.Base64UrlTextEncoder.Encode(
+            System.Text.Encoding.UTF8.GetBytes(token)
+        );
 
         var frontendUrl = _configuration["FrontendUrl"] ?? "http://localhost:5173";
         var confirmationLink = $"{frontendUrl}/auth/confirm-email?token={encodedToken}&email={normalizedEmail}";
@@ -90,24 +93,40 @@ public class AccountService : IAccountService
         };
     }
 
-    public async Task<LoginResponseDto> LoginAsync(LoginRequestDto request)
+    public async Task<LoginInternalResult> LoginAsync(LoginRequestDto request)
     {
         var normalizedEmail = request.Email.Trim().ToLowerInvariant();
         var user = await _unitOfWork.Users.GetByEmailAsync(normalizedEmail);
 
-        if (user == null ||
-            _passwordHasher.VerifyHashedPassword(user, user.PasswordHash!, request.Password)
-            == PasswordVerificationResult.Failed)
+        if (user == null)
         {
+            _passwordHasher.VerifyHashedPassword(
+                new User(),
+                "$2a$11$invalidinvalidinvalidinvalidinvalidinv",
+                request.Password
+            );
+
             throw new InvalidCredentialsException(
                "Invalid login attempt. Please check your email and password."
             );
         }
 
+        var passwordCheck = _passwordHasher.VerifyHashedPassword(user, user.PasswordHash!, request.Password);
+
+        if (passwordCheck == PasswordVerificationResult.Failed)
+        {
+            throw new InvalidCredentialsException(
+              "Invalid login attempt. Please check your email and password."
+           );
+        }
+
         if (!user.EmailConfirmed)
         {
             var token = await _userManager.GenerateEmailConfirmationTokenAsync(user);
-            var encodedToken = System.Web.HttpUtility.UrlEncode(token);
+            var encodedToken = Microsoft.AspNetCore.WebUtilities.Base64UrlTextEncoder.Encode(
+                System.Text.Encoding.UTF8.GetBytes(token)
+            );
+
             var frontendUrl = _configuration["FrontendUrl"] ?? "http://localhost:5173";
             var confirmationLink = $"{frontendUrl}/auth/confirm-email?token={encodedToken}&email={normalizedEmail}";
 
@@ -119,10 +138,10 @@ public class AccountService : IAccountService
 
             await _emailService.SendEmailAsync(user.Email!, "Confirm Your Email", body);
 
-            return new LoginResponseDto
+            return new LoginInternalResult
             {
                 Success = false,
-                Message = "Please confirm your email. A new confirmation message has been sent."
+                Message = "Email not confirmed"
             };
         }
 
@@ -130,15 +149,16 @@ public class AccountService : IAccountService
         var refreshToken = _jwtService.GenerateRefreshToken();
 
         user.RefreshToken = refreshToken;
-        user.RefreshTokenExpiryTime = DateTime.UtcNow.AddDays(7);
+        user.RefreshTokenExpiryTime = DateTime.UtcNow.AddDays(_jwtSettings.RefreshTokenExpirationDays);
         await _unitOfWork.SaveChangesAsync();
 
-        return new LoginResponseDto
+        return new LoginInternalResult
         {
             TokenType = "Bearer",
             AccessToken = acessToken,
             RefreshToken = refreshToken,
-            ExpiresAt = DateTime.UtcNow.AddMinutes(_jwtSettings.ExpirationMinutes),
+            RefreshTokenExpiryTime = user.RefreshTokenExpiryTime,
+            AccessTokenExpiryTime = DateTime.UtcNow.AddMinutes(_jwtSettings.AccessTokenExpirationMinutes),
         };
     }
 
@@ -157,7 +177,10 @@ public class AccountService : IAccountService
         }
 
         var token = await _userManager.GenerateEmailConfirmationTokenAsync(user);
-        var encodedToken = System.Web.HttpUtility.UrlEncode(token);
+        var encodedToken = Microsoft.AspNetCore.WebUtilities.Base64UrlTextEncoder.Encode(
+            System.Text.Encoding.UTF8.GetBytes(token)
+        );
+
         var frontendUrl = _configuration["FrontendUrl"] ?? "http://localhost:5173";
         var confirmationLink = $"{frontendUrl}/auth/confirm-email?token={encodedToken}&email={normalizedEmail}";
 
@@ -190,7 +213,12 @@ public class AccountService : IAccountService
             };
         }
 
-        var result = await _userManager.ConfirmEmailAsync(user, System.Web.HttpUtility.UrlDecode(request.Token));
+        var decodedToken = System.Text.Encoding.UTF8.GetString(
+            Microsoft.AspNetCore.WebUtilities.Base64UrlTextEncoder.Decode(request.Token)
+        );
+
+        var result = await _userManager.ConfirmEmailAsync(user, decodedToken);
+
         if (!result.Succeeded)
         {
             return new ConfirmEmailResponseDto
@@ -222,7 +250,10 @@ public class AccountService : IAccountService
         }
 
         var token = await _userManager.GeneratePasswordResetTokenAsync(user);
-        var encodedToken = System.Web.HttpUtility.UrlEncode(token);
+        var encodedToken = Microsoft.AspNetCore.WebUtilities.Base64UrlTextEncoder.Encode(
+            System.Text.Encoding.UTF8.GetBytes(token)
+        );
+
         var frontendUrl = _configuration["FrontendUrl"] ?? "http://localhost:5173";
         var resetLink = $"{frontendUrl}/auth/reset-password?token={encodedToken}&email={normalizedEmail}";
 
@@ -276,40 +307,49 @@ public class AccountService : IAccountService
             };
         }
 
-        var result = await _userManager.ResetPasswordAsync(user, System.Web.HttpUtility.UrlDecode(request.Token), request.NewPassword);
+        var decodedToken = System.Text.Encoding.UTF8.GetString(
+            Microsoft.AspNetCore.WebUtilities.Base64UrlTextEncoder.Decode(request.Token)
+        );
+
+        var result = await _userManager.ResetPasswordAsync(user, decodedToken, request.NewPassword);
         if (!result.Succeeded)
             throw new BadRequestException("Password reset failed.");
 
         return new ResetPasswordResponseDto();
     }
 
-    public async Task<RefreshTokenResponseDto> RefreshTokenAsync(RefreshTokenRequestDto request)
+    public async Task<RefreshTokenInternalResuslt> RefreshTokenAsync(RefreshTokenRequestDto request, string refreshToken)
     {
         var principal = _jwtService.GetPrincipalFromExpiredToken(request.AccessToken);
         if (principal == null)
             throw new AuthenticationException("Authentication failed.");
 
-        var userEmail = principal.FindFirstValue(ClaimTypes.Email)?.Trim().ToLowerInvariant();
+        var userEmail = principal.FindFirstValue(ClaimTypes.Name)?.Trim().ToLowerInvariant();
         if (string.IsNullOrWhiteSpace(userEmail))
             throw new AuthenticationException("Authentication failed.");
 
         var user = await _unitOfWork.Users.GetByEmailAsync(userEmail);
-        if (user == null || user.RefreshToken != request.RefreshToken || user.RefreshTokenExpiryTime <= DateTime.UtcNow)
+        if (user == null ||
+            user.RefreshToken != refreshToken ||
+            user.RefreshTokenExpiryTime <= DateTime.UtcNow)
+        {
             throw new AuthenticationException("Authentication failed.");
+        }
 
         var newAccessToken = _jwtService.GenerateAccessToken(user);
         var newRefreshToken = _jwtService.GenerateRefreshToken();
 
         user.RefreshToken = newRefreshToken;
-        user.RefreshTokenExpiryTime = DateTime.UtcNow.AddMinutes(_jwtSettings.ExpirationMinutes);
+        user.RefreshTokenExpiryTime = DateTime.UtcNow.AddDays(_jwtSettings.RefreshTokenExpirationDays);
         await _unitOfWork.SaveChangesAsync();
 
-        return new RefreshTokenResponseDto
+        return new RefreshTokenInternalResuslt
         {
             TokenType = "Bearer",
             AccessToken = newAccessToken,
             RefreshToken = newRefreshToken,
-            ExpiresAt = DateTime.UtcNow.AddMinutes(_jwtSettings.ExpirationMinutes),
+            RefreshTokenExpiryTime = user.RefreshTokenExpiryTime,
+            AccessTokenExpiryTime = DateTime.UtcNow.AddMinutes(_jwtSettings.AccessTokenExpirationMinutes),
         };
     }
 

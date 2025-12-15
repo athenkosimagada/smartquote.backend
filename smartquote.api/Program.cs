@@ -146,12 +146,12 @@ app.UseExceptionHandler();
 
 app.UseHttpsRedirection();
 
+app.UseCors("reactApp");
+
 app.UseAuthentication();
 app.UseAuthorization();
 
 app.MapControllers();
-
-app.UseCors("reactApp");
 
 app.MapGet("/", () => Results.Ok("Hello World"));
 

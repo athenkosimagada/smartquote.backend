@@ -61,16 +61,68 @@ public class AccountController : ControllerBase
         await _loginValidator.ValidateAndThrowAsync(request);
 
         var response = await _accountService.LoginAsync(request);
-        return Ok(response);
+        if (response.Success)
+        {
+            Response.Cookies.Append(
+                "RefreshToken", 
+                response.RefreshToken!, 
+                new CookieOptions
+                {
+                    HttpOnly = true,
+                    Secure = true,
+                    SameSite = SameSiteMode.None,
+                    Expires = response.RefreshTokenExpiryTime,
+                });
+        }
+        return Ok(new LoginResponseDto
+        {
+            Success = response.Success,
+            TokenType = response.TokenType,
+            AccessToken = response.AccessToken,
+            ExpiresAt = response.AccessTokenExpiryTime,
+            Message = response.Message
+        });
     }
 
     [HttpPost("refreshToken")]
     public async Task<ActionResult<RefreshTokenResponseDto>> RefreshToken(RefreshTokenRequestDto request)
     {
         await _refreshTokenValidator.ValidateAndThrowAsync(request);
+        var refreshToken = Request.Cookies["RefreshToken"];
+        if (string.IsNullOrEmpty(refreshToken))
+        {
+            return Unauthorized(new
+            {
+                Success = false,
+                Message = "Unauthorized"
+            });
+        }
 
-        var response = await _accountService.RefreshTokenAsync(request);
-        return Ok(response);
+        var response = await _accountService.RefreshTokenAsync(request, refreshToken);
+
+        if (response.Success)
+        {
+            Response.Cookies.Append(
+                "RefreshToken",
+                response.RefreshToken!,
+                new CookieOptions
+                {
+                    HttpOnly = true,
+                    Secure = true,
+                    SameSite = SameSiteMode.None,
+                    Expires = response.RefreshTokenExpiryTime,
+                });
+        }
+
+        return Ok(new RefreshTokenResponseDto
+        {
+            Success = response.Success,
+            TokenType = response.TokenType,
+            AccessToken = response.AccessToken,
+            ExpiresAt = response.AccessTokenExpiryTime,
+            Message = response.Message
+        });
+
     }
 
     [HttpPost("resendConfirmationEmail")]

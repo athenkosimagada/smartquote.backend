@@ -14,8 +14,7 @@ public class ResetPasswordRequestDtoValidator : AbstractValidator<ResetPasswordR
                 .EmailAddress().WithMessage("Invalid email format.");
 
         RuleFor(x => x.Token)
-            .NotEmpty().WithMessage("Reset password code is required.")
-            .Matches("^[0-9]+$").WithMessage("Reset password code must contain numbers only.");
+            .NotEmpty().WithMessage("Reset password code is required.");
 
         RuleFor(x => x.NewPassword)
             .NotEmpty().NotNull().WithMessage("New Password is required.")
