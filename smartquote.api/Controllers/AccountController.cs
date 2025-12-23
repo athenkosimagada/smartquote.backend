@@ -71,7 +71,9 @@ public class AccountController : ControllerBase
                     HttpOnly = true,
                     Secure = true,
                     SameSite = SameSiteMode.None,
-                    Expires = response.RefreshTokenExpiryTime,
+                    Expires = response.RefreshTokenExpiryTime > DateTime.UtcNow
+                    ? response.RefreshTokenExpiryTime
+                    : DateTime.UtcNow.AddDays(7)
                 });
         }
         return Ok(new LoginResponseDto
@@ -105,13 +107,15 @@ public class AccountController : ControllerBase
             Response.Cookies.Append(
                 "RefreshToken",
                 response.RefreshToken!,
-                new CookieOptions
-                {
-                    HttpOnly = true,
-                    Secure = true,
-                    SameSite = SameSiteMode.None,
-                    Expires = response.RefreshTokenExpiryTime,
-                });
+               new CookieOptions
+               {
+                   HttpOnly = true,
+                   Secure = true,
+                   SameSite = SameSiteMode.None,
+                   Expires = response.RefreshTokenExpiryTime > DateTime.UtcNow
+                    ? response.RefreshTokenExpiryTime
+                    : DateTime.UtcNow.AddDays(7)
+               });
         }
 
         return Ok(new RefreshTokenResponseDto

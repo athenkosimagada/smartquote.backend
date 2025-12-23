@@ -29,7 +29,9 @@
   </ItemGroup>
 
   <ItemGroup>
+    <Folder Include="Data\" />
     <Folder Include="Helpers\" />
+    <Folder Include="Migrations\" />
   </ItemGroup>
 
   <ItemGroup>

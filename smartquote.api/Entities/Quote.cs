@@ -3,7 +3,7 @@
 public class Quote : BaseEntity
 {
     public string UserId { get; set; } = string.Empty;
-    public string Customer { get; set; } = string.Empty;
-    public decimal Total { get; set; }
-    public List<Item> Items { get; set; } = new List<Item>();
+    public string CustomerName { get; set; } = string.Empty;
+    public decimal Total { get; set; } = 0;
+    public List<Item> Items { get; set; } = new();
 }

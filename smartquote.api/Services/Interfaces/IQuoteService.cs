@@ -6,8 +6,8 @@ namespace smartquote.api.Services.Interfaces;
 public interface IQuoteService
 {
     Task<QuoteResponseDto> GetQuoteByIdAsync(int id);
-    Task<QuotesResponseDto> GetQuotesAsync(int pageNumber, int pageSize);
-    Task<CreateQuoteResponseDto> CreateQuoteAsync(CreateQuoteRequestDto request);
-    Task<UpdateQuoteResponseDto> UpdateQuoteAsync(UpdateQuoteRequestDto request);
+    Task<QuotesResponseDto> GetQuotesAsync(int pageNumber = 1, int pageSize = 10);
+    Task<CreateQuoteResponseDto> CreateQuoteAsync(string userId, CreateQuoteRequestDto request);
+    Task<UpdateQuoteResponseDto> UpdateQuoteAsync(string userId, UpdateQuoteRequestDto request);
     Task DeleteQuoteAsync(int id);
 }

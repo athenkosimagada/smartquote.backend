@@ -9,17 +9,15 @@ public class CreateQuoteRequestDtoValidator : AbstractValidator<CreateQuoteReque
     {
         RuleLevelCascadeMode = CascadeMode.Stop;
 
-        RuleFor(x => x.UserId)
-            .NotEmpty().WithMessage("User ID is required.")
-            .Must(BeAValidGuid).WithMessage("User ID must be a valid GUID.");
-
-        RuleFor(x => x.Customer)
-            .NotEmpty().WithMessage("Customer is required.")
+        RuleFor(x => x.CustomerName)
+            .NotEmpty().WithMessage("Customer name is required.")
             .MaximumLength(100).WithMessage("Customer name must not exceed 100 characters.");
-    }
 
-    private bool BeAValidGuid(string userId)
-    {
-        return Guid.TryParse(userId, out _);
+        RuleFor(x => x.Items)
+            .NotEmpty().WithMessage("At least one item is required.");
+
+        RuleForEach(x => x.Items)
+            .SetValidator(new CreateQuoteItemRequestDtoValidator());
+
     }
 }

@@ -9,9 +9,6 @@ public class CreateQuoteItemRequestDtoValidator : AbstractValidator<CreateQuoteI
     {
         RuleLevelCascadeMode = CascadeMode.Stop;
 
-        RuleFor(x => x.QuoteId)
-                .GreaterThan(0).WithMessage("Quote Id must be greater than 0");
-
         RuleFor(x => x.Barcode)
             .NotEmpty().NotNull().WithMessage("Barcode is required")
             .MaximumLength(50).WithMessage("Barcode must not exceed 50 characters");

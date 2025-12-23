@@ -39,6 +39,7 @@ public class QuoteService : IQuoteService
     public async Task<QuotesResponseDto> GetQuotesAsync(int pageNumber, int pageSize)
     {
         var quotes = await _unitOfWork.Quotes.GetAllAsync(pageNumber, pageSize, includeItems: true);
+
         return new QuotesResponseDto
         {
             Quotes = _mapper.Map<List<QuoteDto>>(quotes),
@@ -48,9 +49,12 @@ public class QuoteService : IQuoteService
         };
     }
 
-    public async Task<CreateQuoteResponseDto> CreateQuoteAsync(CreateQuoteRequestDto request)
+    public async Task<CreateQuoteResponseDto> CreateQuoteAsync(string userId, CreateQuoteRequestDto request)
     {
         var quote = _mapper.Map<Quote>(request);
+
+        quote.UserId = userId;
+        quote.Total = quote.Items.Sum(i => i.Price * i.Quantity);
 
         await _unitOfWork.Quotes.AddAsync(quote);
         var result = await _unitOfWork.SaveChangesAsync();
@@ -63,7 +67,7 @@ public class QuoteService : IQuoteService
         return response;
     }
 
-    public async Task<UpdateQuoteResponseDto> UpdateQuoteAsync(UpdateQuoteRequestDto request)
+    public async Task<UpdateQuoteResponseDto> UpdateQuoteAsync(string userId, UpdateQuoteRequestDto request)
     {
         var quote = await _unitOfWork.Quotes.GetByIdAsync(request.Id);
         if (quote == null)
@@ -71,7 +75,18 @@ public class QuoteService : IQuoteService
             throw new NotFoundException($"Quote with ID {request.Id} not found.");
         }
 
-        _mapper.Map(request, quote);
+        quote.CustomerName = request.CustomerName;
+        quote.Items.Clear();
+
+        foreach (var itemDto in request.Items)
+        {
+            var item = _mapper.Map<Item>(itemDto);
+            item.QuoteId = quote.Id;
+            quote.Items.Add(item);
+        }
+
+        quote.Total = quote.Items.Sum(i => i.Price * i.Quantity);
+
         _unitOfWork.Quotes.Update(quote);
 
         var result = await _unitOfWork.SaveChangesAsync();

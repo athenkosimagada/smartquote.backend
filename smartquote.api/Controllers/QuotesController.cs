@@ -29,6 +29,13 @@ public class QuotesController : ControllerBase
         _updateQuoteValidator = updateQuoteRequestDto;
     }
 
+    [HttpGet]
+    public async Task<IActionResult> GetQuotes()
+    {
+        var response = await _quoteService.GetQuotesAsync();
+        return Ok(response);
+    }
+
     [HttpGet("{id}")]
     public async Task<IActionResult> GetQuoteById(int id)
     {
@@ -62,9 +69,7 @@ public class QuotesController : ControllerBase
             });
         }
 
-        request.UserId = userId;
-
-        var response = await _quoteService.CreateQuoteAsync(request);
+        var response = await _quoteService.CreateQuoteAsync(userId, request);
         return CreatedAtAction(nameof(GetQuoteById), new { id = response.QuoteId }, response);
     }
 
@@ -95,9 +100,7 @@ public class QuotesController : ControllerBase
             });
         }
 
-        request.UserId = userId;
-
-        var response = await _quoteService.UpdateQuoteAsync(request);
+        var response = await _quoteService.UpdateQuoteAsync(userId, request);
         return Ok(response);
     }
 

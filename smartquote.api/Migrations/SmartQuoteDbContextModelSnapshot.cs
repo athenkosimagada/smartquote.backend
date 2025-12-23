@@ -203,7 +203,7 @@ namespace smartquote.api.Migrations
                     b.Property<DateTime>("CreatedAt")
                         .HasColumnType("timestamp with time zone");
 
-                    b.Property<string>("Customer")
+                    b.Property<string>("CustomerName")
                         .IsRequired()
                         .HasColumnType("text");
 
@@ -362,11 +362,13 @@ namespace smartquote.api.Migrations
 
             modelBuilder.Entity("smartquote.api.Entities.Item", b =>
                 {
-                    b.HasOne("smartquote.api.Entities.Quote", null)
+                    b.HasOne("smartquote.api.Entities.Quote", "Quote")
                         .WithMany("Items")
                         .HasForeignKey("QuoteId")
                         .OnDelete(DeleteBehavior.Cascade)
                         .IsRequired();
+
+                    b.Navigation("Quote");
                 });
 
             modelBuilder.Entity("smartquote.api.Entities.Quote", b =>

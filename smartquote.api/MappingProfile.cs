@@ -24,11 +24,17 @@ public class MappingProfile : Profile
         CreateMap<Item, ItemDto>().ReverseMap();
 
         // Quote mappings
-        CreateMap<CreateQuoteRequestDto, Quote>().ReverseMap();
-        CreateMap<UpdateQuoteRequestDto, Quote>().ReverseMap();
+        CreateMap<CreateQuoteRequestDto, Quote>()
+            .ForMember(dest => dest.UserId, opt => opt.Ignore())
+            .ForMember(dest => dest.Total, opt => opt.Ignore());
+
+        CreateMap<UpdateQuoteRequestDto, Quote>()
+            .ForMember(dest => dest.UserId, opt => opt.Ignore())
+            .ForMember(dest => dest.Total, opt => opt.Ignore());
 
         // 👇 This ensures Quote.Items → QuoteDto.Items is mapped automatically
         CreateMap<Quote, QuoteDto>()
+            .ForMember(dest => dest.CustomerName, opt => opt.MapFrom(src => src.CustomerName))
             .ForMember(dest => dest.Items, opt => opt.MapFrom(src => src.Items));
     }
 }

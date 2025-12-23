@@ -3,6 +3,7 @@
 public class Item : BaseEntity
 {
     public int QuoteId { get; set; }
+    public Quote Quote { get; set; } = null!;
     public string Barcode { get; set; } = string.Empty;
     public string Name { get; set; } = string.Empty;
     public decimal Price { get; set; }
