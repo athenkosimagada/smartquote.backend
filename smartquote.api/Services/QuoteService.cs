@@ -45,7 +45,7 @@ public class QuoteService : IQuoteService
             Quotes = _mapper.Map<List<QuoteDto>>(quotes),
             PageNumber = pageNumber,
             PageSize = pageSize,
-            TotalCount = quotes.Count(),
+            TotalCount = await _unitOfWork.Quotes.TotalQuoteCount(),
         };
     }
 

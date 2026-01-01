@@ -30,9 +30,18 @@ public class QuotesController : ControllerBase
     }
 
     [HttpGet]
-    public async Task<IActionResult> GetQuotes()
+    public async Task<IActionResult> GetQuotes([FromQuery] int pageNumber = 1, int pageSize = 10)
     {
-        var response = await _quoteService.GetQuotesAsync();
+        if (pageNumber <= 0 || pageSize <= 0)
+        {
+            return BadRequest(new
+            {
+                Success = false,
+                Message = "Page and pageSize must be a number that is greater than zero."
+            });
+        }
+
+        var response = await _quoteService.GetQuotesAsync(pageNumber, pageSize);
         return Ok(response);
     }
 

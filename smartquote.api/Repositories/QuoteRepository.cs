@@ -1,4 +1,5 @@
-﻿using smartquote.api.Data;
+﻿using Microsoft.EntityFrameworkCore;
+using smartquote.api.Data;
 using smartquote.api.Entities;
 using smartquote.api.Repositories.Interfaces;
 
@@ -12,6 +13,12 @@ public class QuoteRepository : Repository<Quote>, IQuoteRepository
     {
         SmartQuoteDbContext.Quotes.Update(quote);
     }
+
+    public async Task<int> TotalQuoteCount()
+    {
+        return await SmartQuoteDbContext.Quotes.CountAsync();
+    }
+
     public SmartQuoteDbContext SmartQuoteDbContext
     {
         get {
