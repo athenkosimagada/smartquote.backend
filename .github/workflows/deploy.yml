@@ -1,70 +1,53 @@
-# Docs for the Azure Web Apps Deploy action: https://github.com/Azure/webapps-deploy
-# More GitHub Actions for Azure: https://github.com/Azure/actions
-
-name: Deploy to Azure Web App - smartquote
+name: Smart Quote CI/CD
 
 on:
+  workflow_dispatch:
   push:
     branches:
       - main
-  workflow_dispatch:
+
+env:
+  DOTNET_VERSION: "9.x"
+  SOLUTION_PATH: "smartquote.sln"
+  API_PROJECT_PATH: "smartquote.api"
 
 jobs:
   build-and-test:
-    runs-on: windows-latest
-    permissions:
-      contents: read #This is required for actions/checkout
+    name: Build and Test
+    runs-on: ubuntu-latest
 
     steps:
       - uses: actions/checkout@v4
 
-      - name: Set up .NET Core
+      - name: Setup .NET
         uses: actions/setup-dotnet@v4
         with:
-          dotnet-version: "9.x"
+          dotnet-version: ${{ env.DOTNET_VERSION }}
 
-      - name: Restore dependencies
-        run: dotnet restore
+      - name: Restore
+        run: dotnet restore ${{ env.SOLUTION_PATH }}
 
-      - name: Build with dotnet
-        run: dotnet build -c Release --no-restore
-
-      # - name: Test with dotnet
-      #   run: dotnet test -c Release --no-restore --verbosity normal
-
-      - name: dotnet publish
-        run: dotnet publish -c Release -o "${{env.DOTNET_ROOT}}/myapp"
-
-      - name: Upload artifact for deployment job
-        uses: actions/upload-artifact@v4
-        with:
-          name: .net-app
-          path: ${{env.DOTNET_ROOT}}/myapp
+      - name: Build
+        run: dotnet build ${{ env.SOLUTION_PATH }} --configuration Release --no-restore
 
   deploy:
-    runs-on: windows-latest
-    needs: build-and-test
-    permissions:
-      id-token: write #This is required for requesting the JWT
-      contents: read #This is required for actions/checkout
-
+    name: Deploy to Railway
+    runs-on: ubuntu-latest
+    needs: [build-and-test]
+    container: ghcr.io/railwayapp/cli:latest
+    env:
+      RAILWAY_TOKEN: ${{ secrets.RAILWAY_TOKEN }}
+      SVC_ID: ${{ secrets.SVC_ID }}
+      JwtSettings__SecretKey: ${{ secrets.JWT_SECRET_KEY }}
+      JwtSettings__Issuer: ${{ secrets.JWT_ISSUER }}
+      JwtSettings__Audience: ${{ secrets.JWT_AUDIENCE }}
+      JwtSettings__ExpirationMinutes: ${{ secrets.JWT_EXPIRATION_MINUTES }}
+      ConnectionStrings__DefaultConnection: ${{ secrets.DB_CONNECTION_STRING }}
     steps:
-      - name: Download artifact from build job
-        uses: actions/download-artifact@v4
-        with:
-          name: .net-app
+      - uses: actions/checkout@v4
 
-      - name: Login to Azure
-        uses: azure/login@v2
-        with:
-          client-id: ${{ secrets.AZUREAPPSERVICE_CLIENTID_FD8E0102A88748EAA6184E9074800BC9 }}
-          tenant-id: ${{ secrets.AZUREAPPSERVICE_TENANTID_88D8CFE59280490FAFB631E6619AC7FE }}
-          subscription-id: ${{ secrets.AZUREAPPSERVICE_SUBSCRIPTIONID_118AA50CA0F24ABB81C9424740BDCE43 }}
+      - name: Install Railway CLI
+        run: curl -sSL https://cli.railway.app/install.sh | sh
 
-      - name: Deploy to Azure Web App
-        id: deploy-to-webapp
-        uses: azure/webapps-deploy@v3
-        with:
-          app-name: "smartquote"
-          slot-name: "Production"
-          package: .
+      - name: Deploy
+        run: railway up --service ${{ env.SVC_ID }} --path-as-root smartquote.api
